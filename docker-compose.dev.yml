@@ -9,7 +9,7 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_dev:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-student_clearance}"]
       interval: 10s
@@ -19,6 +19,7 @@ services:
   backend:
     build:
       context: ./backend
+    image: student-clearance-backend:dev
     container_name: student-clearance-backend-dev
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-student_clearance}
@@ -37,6 +38,7 @@ services:
       context: ./frontend
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+    image: student-clearance-frontend:dev
     container_name: student-clearance-frontend-dev
     ports:
       - "${FRONTEND_PORT:-5173}:80"
@@ -44,4 +46,4 @@ services:
       - backend
 
 volumes:
-  postgres_data:
+  postgres_data_dev:

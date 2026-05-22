@@ -76,6 +76,41 @@ Health endpoint:
 GET http://localhost:8080/api/health
 ```
 
+## Run With Docker Compose
+
+Development stack:
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+The default `docker-compose.yml` also starts the development stack:
+
+```bash
+docker compose up --build
+```
+
+Development URLs:
+
+```text
+Frontend: http://localhost:5173
+Backend health: http://localhost:8080/api/health
+Swagger: http://localhost:8080/swagger-ui/index.html
+PostgreSQL: localhost:5432
+```
+
+Production-style stack:
+
+```bash
+POSTGRES_PASSWORD=change-me JWT_SECRET=change-me docker compose -f docker-compose.prod.yml up --build
+```
+
+Production URL:
+
+```text
+Frontend: http://localhost
+```
+
 ## Run Frontend
 
 ```bash
@@ -113,6 +148,15 @@ npm run build
 - Each commit should be easy for all group members to explain during presentation.
 - Use clear commit messages that describe the feature or layer changed.
 - Do not commit local `.env` files, generated build folders, or dependency folders.
+
+## CI/CD
+
+GitHub Actions workflows are configured for development and production branches:
+
+- `Dev CI/CD` runs on push or pull request to `dev`
+- `Prod CI/CD` runs on push or pull request to `main`
+
+Both workflows build the backend, build the frontend, validate the matching Docker Compose file, build Compose images, start the stack, show container status, and shut it down.
 
 ## Current Phase Completed
 
