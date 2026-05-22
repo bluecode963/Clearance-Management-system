@@ -3,8 +3,10 @@ package com.se4801.clearance.exception;
 import com.se4801.clearance.dto.response.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -29,6 +31,33 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI(), List.of());
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiErrorResponse> handleBadCredentials(
+            BadCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), request.getRequestURI(), List.of());
+    }
+
+    @ExceptionHandler({
+            io.jsonwebtoken.JwtException.class,
+            IllegalArgumentException.class
+    })
+    public ResponseEntity<ApiErrorResponse> handleInvalidToken(Exception exception, HttpServletRequest request) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .headers(headers)
+                .body(new ApiErrorResponse(
+                        Instant.now(),
+                        HttpStatus.UNAUTHORIZED.value(),
+                        HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                        "Invalid or expired token",
+                        request.getRequestURI(),
+                        List.of()
+                ));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
