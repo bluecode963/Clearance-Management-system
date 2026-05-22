@@ -125,6 +125,34 @@ The frontend starts at:
 http://localhost:5173
 ```
 
+## Authentication API
+
+Phase 2 adds JWT authentication and role-based security.
+
+Public endpoints:
+
+```text
+POST /api/auth/register
+POST /api/auth/login
+GET  /api/health
+```
+
+Protected endpoints:
+
+```text
+POST /api/auth/logout
+GET  /api/auth/me
+```
+
+JWT configuration is read from environment variables:
+
+```text
+JWT_SECRET
+JWT_EXPIRATION_MS
+```
+
+Use a `JWT_SECRET` value of at least 32 characters when running login or registration.
+
 ## Run Tests
 
 Backend:
