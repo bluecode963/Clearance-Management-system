@@ -5,6 +5,7 @@ import { OfficeStaffDashboardPage } from './pages/OfficeStaffDashboardPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { RegistrarDashboardPage } from './pages/RegistrarDashboardPage';
 import { StudentDashboardPage } from './pages/StudentDashboardPage';
+import type { AuthResponse, UserRole } from './services/api';
 
 type PageKey = 'login' | 'register' | 'student' | 'admin' | 'office' | 'registrar';
 
@@ -20,10 +21,14 @@ const pages: Record<PageKey, string> = {
 export default function App() {
   const [activePage, setActivePage] = useState<PageKey>('login');
 
+  function handleAuthenticated(auth: AuthResponse) {
+    setActivePage(roleToPage(auth.user.role));
+  }
+
   const page = useMemo(() => {
     switch (activePage) {
       case 'register':
-        return <RegisterPage />;
+        return <RegisterPage onAuthenticated={handleAuthenticated} />;
       case 'student':
         return <StudentDashboardPage />;
       case 'admin':
@@ -33,7 +38,7 @@ export default function App() {
       case 'registrar':
         return <RegistrarDashboardPage />;
       default:
-        return <LoginPage />;
+        return <LoginPage onAuthenticated={handleAuthenticated} />;
     }
   }, [activePage]);
 
@@ -60,4 +65,17 @@ export default function App() {
       {page}
     </>
   );
+}
+
+function roleToPage(role: UserRole): PageKey {
+  switch (role) {
+    case 'ADMIN':
+      return 'admin';
+    case 'OFFICE_STAFF':
+      return 'office';
+    case 'REGISTRAR':
+      return 'registrar';
+    default:
+      return 'student';
+  }
 }
