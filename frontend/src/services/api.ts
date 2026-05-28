@@ -34,6 +34,40 @@ export type RegisterPayload = {
   yearOfStudy?: number;
 };
 
+export type ClearanceType = 'GRADUATION' | 'WITHDRAWAL' | 'TRANSFER';
+
+export type ClearanceRequestPayload = {
+  requestType: ClearanceType;
+  reason?: string;
+};
+
+export type ClearanceStepResponse = {
+  id: number;
+  officeId: number;
+  officeName: string;
+  status: string;
+  comment?: string | null;
+  reviewedAt?: string | null;
+};
+
+export type ClearanceRequestResponse = {
+  id: number;
+  requestType: ClearanceType;
+  status: string;
+  reason?: string | null;
+  createdAt: string;
+  steps: ClearanceStepResponse[];
+};
+
+export type PageResponse<T> = {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+};
+
 export async function getHealth() {
   const response = await fetch(`${API_BASE_URL}/api/health`);
 
@@ -92,6 +126,23 @@ export async function logout() {
   clearToken();
 }
 
+export async function createClearanceRequest(payload: ClearanceRequestPayload) {
+  return authorizedJson<ClearanceRequestResponse>('/api/clearance-requests', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getMyClearanceRequests(page = 0, size = 10) {
+  return authorizedJson<PageResponse<ClearanceRequestResponse>>(
+    `/api/clearance-requests/my?page=${page}&size=${size}`
+  );
+}
+
+export async function getClearanceRequestById(id: number) {
+  return authorizedJson<ClearanceRequestResponse>(`/api/clearance-requests/${id}`);
+}
+
 export function getToken() {
   return localStorage.getItem('clearance_auth_token');
 }
@@ -123,6 +174,33 @@ async function handleAuthResponse(response: Response) {
   saveToken(data.token);
   saveUser(data.user);
   return data;
+}
+
+async function authorizedJson<T>(path: string, options: RequestInit = {}) {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Please login before using clearance requests.');
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new Error(BACKEND_CONNECTION_ERROR);
+  }
+
+  if (!response.ok) {
+    throw new Error(await resolveErrorMessage(response));
+  }
+
+  return response.json() as Promise<T>;
 }
 
 async function resolveErrorMessage(response: Response) {
