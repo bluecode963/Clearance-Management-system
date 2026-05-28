@@ -144,6 +144,16 @@ POST /api/auth/logout
 GET  /api/auth/me
 ```
 
+Student clearance request endpoints:
+
+```text
+POST /api/clearance-requests
+GET  /api/clearance-requests/my?page=0&size=10
+GET  /api/clearance-requests/{id}
+```
+
+Only users with the `STUDENT` role can create and view their own clearance requests. When a student creates a request, the backend automatically creates clearance steps for active offices seeded by Flyway.
+
 JWT configuration is read from environment variables:
 
 ```text
