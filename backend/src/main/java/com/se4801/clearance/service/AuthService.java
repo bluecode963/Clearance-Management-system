@@ -3,7 +3,9 @@ package com.se4801.clearance.service;
 import com.se4801.clearance.dto.request.LoginRequest;
 import com.se4801.clearance.dto.request.RegisterRequest;
 import com.se4801.clearance.dto.response.AuthResponse;
+import com.se4801.clearance.dto.response.UserResponse;
 import com.se4801.clearance.exception.BusinessRuleException;
+import com.se4801.clearance.exception.ResourceNotFoundException;
 import com.se4801.clearance.mapper.UserMapper;
 import com.se4801.clearance.model.Role;
 import com.se4801.clearance.model.StudentProfile;
@@ -75,6 +77,12 @@ public class AuthService {
     @Transactional
     public void logout(String token) {
         tokenBlacklistService.blacklist(normalizeToken(token));
+    }
+
+    public UserResponse getCurrentUser(String email) {
+        return userRepository.findByEmail(email)
+                .map(UserMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user was not found"));
     }
 
     private AuthResponse buildAuthResponse(User user) {
