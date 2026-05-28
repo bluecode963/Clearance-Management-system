@@ -10,4 +10,6 @@ public interface OfficeRepository extends JpaRepository<Office, Long> {
     Optional<Office> findByOfficeName(String officeName);
 
     List<Office> findByActiveTrue();
+
+    List<Office> findByActiveTrueOrderByIdAsc();
 }
