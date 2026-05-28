@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const BACKEND_CONNECTION_ERROR =
+  'Cannot connect to backend. Please check if backend is running on http://localhost:8080.';
 
 export type UserRole = 'ADMIN' | 'STUDENT' | 'OFFICE_STAFF' | 'REGISTRAR';
 
@@ -33,7 +35,7 @@ export type RegisterPayload = {
 };
 
 export async function getHealth() {
-  const response = await fetch(`${API_BASE_URL}/health`);
+  const response = await fetch(`${API_BASE_URL}/api/health`);
 
   if (!response.ok) {
     throw new Error('Backend health check failed');
@@ -43,21 +45,31 @@ export async function getHealth() {
 }
 
 export async function login(payload: LoginPayload) {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new Error(BACKEND_CONNECTION_ERROR);
+  }
 
   return handleAuthResponse(response);
 }
 
 export async function register(payload: RegisterPayload) {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new Error(BACKEND_CONNECTION_ERROR);
+  }
 
   return handleAuthResponse(response);
 }
@@ -68,7 +80,7 @@ export async function logout() {
     return;
   }
 
-  await fetch(`${API_BASE_URL}/auth/logout`, {
+  await fetch(`${API_BASE_URL}/api/auth/logout`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -84,12 +96,22 @@ export function getToken() {
   return localStorage.getItem('clearance_auth_token');
 }
 
+export function getSavedUser() {
+  const user = localStorage.getItem('clearance_auth_user');
+  return user ? (JSON.parse(user) as UserResponse) : null;
+}
+
 export function saveToken(token: string) {
   localStorage.setItem('clearance_auth_token', token);
 }
 
+export function saveUser(user: UserResponse) {
+  localStorage.setItem('clearance_auth_user', JSON.stringify(user));
+}
+
 export function clearToken() {
   localStorage.removeItem('clearance_auth_token');
+  localStorage.removeItem('clearance_auth_user');
 }
 
 async function handleAuthResponse(response: Response) {
@@ -99,6 +121,7 @@ async function handleAuthResponse(response: Response) {
 
   const data = (await response.json()) as AuthResponse;
   saveToken(data.token);
+  saveUser(data.user);
   return data;
 }
 
