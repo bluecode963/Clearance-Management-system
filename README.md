@@ -154,6 +154,33 @@ GET  /api/clearance-requests/{id}
 
 Only users with the `STUDENT` role can create and view their own clearance requests. When a student creates a request, the backend automatically creates clearance steps for active offices seeded by Flyway.
 
+Office staff review endpoints:
+
+```text
+GET   /api/office/clearance-steps?page=0&size=10&status=PENDING
+GET   /api/office/clearance-steps/{id}
+PATCH /api/office/clearance-steps/{id}/review
+```
+
+Only users with the `OFFICE_STAFF` role can access these endpoints. Office staff users must be assigned to an office before they can review steps.
+
+For local testing, register an office staff user and assign the user to an office with SQL:
+
+```sql
+UPDATE users
+SET office_id = (SELECT id FROM offices WHERE office_name = 'Library')
+WHERE email = 'library.staff@test.com';
+```
+
+Example review body:
+
+```json
+{
+  "decision": "APPROVED",
+  "comment": "Cleared by library"
+}
+```
+
 JWT configuration is read from environment variables:
 
 ```text
