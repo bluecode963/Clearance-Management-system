@@ -59,6 +59,21 @@ export type ClearanceRequestResponse = {
   steps: ClearanceStepResponse[];
 };
 
+export type OfficeStepReviewResponse = {
+  stepId: number;
+  clearanceRequestId: number;
+  requestType: string;
+  requestStatus: string;
+  studentName: string;
+  studentId: string;
+  officeId: number;
+  officeName: string;
+  status: string;
+  comment?: string | null;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
+};
+
 export type PageResponse<T> = {
   content: T[];
   page: number;
@@ -141,6 +156,18 @@ export async function getMyClearanceRequests(page = 0, size = 10) {
 
 export async function getClearanceRequestById(id: number) {
   return authorizedJson<ClearanceRequestResponse>(`/api/clearance-requests/${id}`);
+}
+
+export async function getAssignedOfficeSteps(status?: string) {
+  const query = status ? `?status=${status}` : '';
+  return authorizedJson<PageResponse<OfficeStepReviewResponse>>(`/api/office/clearance-steps${query}`);
+}
+
+export async function reviewOfficeStep(stepId: number, decision: 'APPROVED' | 'REJECTED', comment: string) {
+  return authorizedJson<OfficeStepReviewResponse>(`/api/office/clearance-steps/${stepId}/review`, {
+    method: 'PATCH',
+    body: JSON.stringify({ decision, comment }),
+  });
 }
 
 export function getToken() {
