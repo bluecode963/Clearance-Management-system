@@ -61,7 +61,7 @@ export function StudentDashboardPage() {
     return [
       { label: 'My requests', value: String(requests.length) },
       { label: 'Latest progress', value: totalSteps ? `${approvedSteps} / ${totalSteps}` : '0 / 0' },
-      { label: 'Latest status', value: latest?.status.replaceAll('_', ' ') ?? 'None' },
+      { label: 'Latest status', value: latest ? formatEnum(latest.status) : 'None' },
     ];
   }, [requests]);
 
@@ -126,14 +126,14 @@ export function StudentDashboardPage() {
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="font-semibold text-slate-950">
-                        #{request.id} {request.requestType.replaceAll('_', ' ')}
+                        #{request.id} {formatEnum(request.requestType)}
                       </p>
                       <p className="text-sm text-slate-500">
                         Created {new Date(request.createdAt).toLocaleString()}
                       </p>
                     </div>
                     <span className="w-fit rounded bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700">
-                      {request.status.replaceAll('_', ' ')}
+                      {formatEnum(request.status)}
                     </span>
                   </div>
                   {request.reason && <p className="text-sm text-slate-600">{request.reason}</p>}
@@ -154,4 +154,8 @@ export function StudentDashboardPage() {
       </div>
     </PageShell>
   );
+}
+
+function formatEnum(value: string) {
+  return value.replace(/_/g, ' ');
 }
