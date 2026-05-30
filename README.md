@@ -125,24 +125,53 @@ The frontend starts at:
 http://localhost:5173
 ```
 
-## Authentication API
+## Authentication and User Management
 
-Phase 2 adds JWT authentication and role-based security.
+The current authentication flow uses JWT, BCrypt password hashing, token blacklist logout, and role-based access control.
 
 Public endpoints:
 
 ```text
-POST /api/auth/register
 POST /api/auth/login
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
 GET  /api/health
 ```
 
 Protected endpoints:
 
 ```text
+POST /api/auth/register
 POST /api/auth/logout
 GET  /api/auth/me
+POST /api/admin/users
 ```
+
+Public self-registration is not part of the normal user flow. Users log in with a selected role, and the backend rejects login if the selected role does not match the account. Admin users create new student, office staff, registrar, or admin accounts from the protected admin dashboard or with `POST /api/admin/users`.
+
+Example login body:
+
+```json
+{
+  "email": "student1@test.com",
+  "password": "password123",
+  "role": "STUDENT"
+}
+```
+
+Example admin user creation body:
+
+```json
+{
+  "fullName": "Library Staff",
+  "email": "library.staff@test.com",
+  "password": "password123",
+  "role": "OFFICE_STAFF",
+  "officeId": 1
+}
+```
+
+Forgot password is development-friendly. It always returns a generic message and returns the reset token only when the backend runs with the `dev` profile.
 
 Student clearance request endpoints:
 
@@ -225,7 +254,7 @@ Both workflows build the backend, build the frontend, validate the matching Dock
 
 ## Current Phase Completed
 
-Phase 1 foundation:
+Completed phases:
 
 - Backend Spring Boot project structure under `backend/`
 - Core domain enums and JPA entities
@@ -235,5 +264,10 @@ Phase 1 foundation:
 - Health endpoint
 - Global exception handling foundation
 - React + Vite + TypeScript + Tailwind frontend under `frontend/`
-- Simple role-based page placeholders
 - Docker Compose PostgreSQL service
+- JWT authentication with role-aware login
+- Protected frontend dashboard routing
+- Admin-only user creation
+- Development password reset flow
+- Student clearance request creation and tracking
+- Office staff clearance step review workflow
