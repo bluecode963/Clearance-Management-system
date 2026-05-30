@@ -71,6 +71,10 @@ public class AuthService {
             throw new BusinessRuleException("User account is inactive");
         }
 
+        if (user.getRole() != request.role()) {
+            throw new BadCredentialsException("Selected role does not match this account");
+        }
+
         return buildAuthResponse(user);
     }
 
