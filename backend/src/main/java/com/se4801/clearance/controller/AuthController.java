@@ -2,11 +2,15 @@ package com.se4801.clearance.controller;
 
 import com.se4801.clearance.dto.request.LoginRequest;
 import com.se4801.clearance.dto.request.LogoutRequest;
+import com.se4801.clearance.dto.request.ForgotPasswordRequest;
 import com.se4801.clearance.dto.request.RegisterRequest;
+import com.se4801.clearance.dto.request.ResetPasswordRequest;
 import com.se4801.clearance.dto.response.AuthResponse;
+import com.se4801.clearance.dto.response.PasswordResetResponse;
 import com.se4801.clearance.dto.response.UserResponse;
 import com.se4801.clearance.security.CustomUserPrincipal;
 import com.se4801.clearance.service.AuthService;
+import com.se4801.clearance.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
     @PreAuthorize("hasRole('ADMIN')")
@@ -42,6 +47,16 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@Valid @RequestBody LogoutRequest request) {
         authService.logout(request.token());
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<PasswordResetResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(passwordResetService.startReset(request.email()));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<PasswordResetResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(passwordResetService.resetPassword(request.token(), request.newPassword()));
     }
 
     @GetMapping("/me")
