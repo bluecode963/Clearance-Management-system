@@ -21,6 +21,7 @@ export type AuthResponse = {
 export type LoginPayload = {
   email: string;
   password: string;
+  role: UserRole;
 };
 
 export type RegisterPayload = {
@@ -32,6 +33,20 @@ export type RegisterPayload = {
   department?: string;
   program?: string;
   yearOfStudy?: number;
+};
+
+export type AdminCreateUserPayload = RegisterPayload & {
+  officeId?: number;
+};
+
+export type PasswordResetStartResponse = {
+  message: string;
+  resetToken?: string | null;
+};
+
+export type ResetPasswordPayload = {
+  token: string;
+  newPassword: string;
 };
 
 export type ClearanceType = 'GRADUATION' | 'WITHDRAWAL' | 'TRANSFER';
@@ -105,7 +120,12 @@ export async function login(payload: LoginPayload) {
     throw new Error(BACKEND_CONNECTION_ERROR);
   }
 
-  return handleAuthResponse(response);
+  const auth = await handleAuthResponse(response);
+  if (auth.user.role !== payload.role) {
+    clearToken();
+    throw new Error('Selected role does not match this account.');
+  }
+  return auth;
 }
 
 export async function register(payload: RegisterPayload) {
@@ -129,16 +149,66 @@ export async function logout() {
     return;
   }
 
-  await fetch(`${API_BASE_URL}/api/auth/logout`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ token }),
-  });
+  try {
+    await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ token }),
+    });
+  } finally {
+    clearToken();
+  }
+}
 
-  clearToken();
+export async function forgotPassword(email: string) {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+  } catch {
+    throw new Error(BACKEND_CONNECTION_ERROR);
+  }
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearToken();
+    }
+    throw new Error(await resolveErrorMessage(response));
+  }
+
+  return response.json() as Promise<PasswordResetStartResponse>;
+}
+
+export async function resetPassword(payload: ResetPasswordPayload) {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new Error(BACKEND_CONNECTION_ERROR);
+  }
+
+  if (!response.ok) {
+    throw new Error(await resolveErrorMessage(response));
+  }
+
+  return response.json() as Promise<PasswordResetStartResponse>;
+}
+
+export async function createAdminUser(payload: AdminCreateUserPayload) {
+  return authorizedJson<UserResponse>('/api/admin/users', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function createClearanceRequest(payload: ClearanceRequestPayload) {
@@ -194,6 +264,9 @@ export function clearToken() {
 
 async function handleAuthResponse(response: Response) {
   if (!response.ok) {
+    if (response.status === 401) {
+      clearToken();
+    }
     throw new Error(await resolveErrorMessage(response));
   }
 

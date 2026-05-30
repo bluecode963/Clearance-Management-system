@@ -1,12 +1,14 @@
 import { FormEvent, useState } from 'react';
 import { PageShell } from '../components/PageShell';
-import { login, type AuthResponse } from '../services/api';
+import { login, type AuthResponse, type UserRole } from '../services/api';
 
 type LoginPageProps = {
   onAuthenticated: (auth: AuthResponse) => void;
+  onForgotPassword: () => void;
 };
 
-export function LoginPage({ onAuthenticated }: LoginPageProps) {
+export function LoginPage({ onAuthenticated, onForgotPassword }: LoginPageProps) {
+  const [role, setRole] = useState<UserRole>('STUDENT');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -20,7 +22,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     setSubmitting(true);
 
     try {
-      const auth = await login({ email, password });
+      const auth = await login({ email, password, role });
       setMessage(`Welcome, ${auth.user.fullName}.`);
       onAuthenticated(auth);
     } catch (authError) {
@@ -36,6 +38,19 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       subtitle="Sign in with your registered account to open the matching role dashboard."
     >
       <form className="max-w-md space-y-4 rounded border border-slate-200 bg-white p-6 shadow-sm" onSubmit={handleSubmit}>
+        <label className="block text-sm font-medium text-slate-700">
+          Role
+          <select
+            className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            onChange={(event) => setRole(event.target.value as UserRole)}
+            value={role}
+          >
+            <option value="STUDENT">Student</option>
+            <option value="ADMIN">Admin</option>
+            <option value="OFFICE_STAFF">Office Staff</option>
+            <option value="REGISTRAR">Registrar</option>
+          </select>
+        </label>
         <label className="block text-sm font-medium text-slate-700">
           Email
           <input
@@ -66,6 +81,9 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           type="submit"
         >
           {submitting ? 'Signing in...' : 'Login'}
+        </button>
+        <button className="text-sm font-semibold text-brand-700" onClick={onForgotPassword} type="button">
+          Forgot password?
         </button>
       </form>
     </PageShell>
