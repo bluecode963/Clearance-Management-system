@@ -220,6 +220,34 @@ Example review body:
 }
 ```
 
+Registrar final approval endpoints:
+
+```text
+GET   /api/registrar/clearance-requests?page=0&size=10&status=READY_FOR_REGISTRAR
+GET   /api/registrar/clearance-requests/{id}
+PATCH /api/registrar/clearance-requests/{id}/decision
+```
+
+Only users with the `REGISTRAR` role can access these endpoints. The registrar can finalize only requests with status `READY_FOR_REGISTRAR`, after all non-registrar office steps are approved.
+
+Example final approval body:
+
+```json
+{
+  "decision": "APPROVED",
+  "comment": "Final clearance approved"
+}
+```
+
+Example final rejection body:
+
+```json
+{
+  "decision": "REJECTED",
+  "comment": "Registrar found missing final requirement"
+}
+```
+
 JWT configuration is read from environment variables:
 
 ```text
@@ -282,3 +310,4 @@ Completed phases:
 - Development password reset flow
 - Student clearance request creation and tracking
 - Office staff clearance step review workflow
+- Registrar final approval workflow

@@ -67,12 +67,12 @@ e289bbd add project status review and improvement plan
 | Stage 6: Forgot/reset password | DONE | Backend endpoints, token table, hashed reset tokens, dev token display, frontend pages exist. |
 | Stage 7: Student clearance request workflow | DONE | Student creates one active request, steps auto-created, own list/detail endpoints and frontend integration. |
 | Stage 8: Office staff review workflow | DONE | Staff list/view/review assigned office steps; reject comment required; reviewed steps blocked; request status updates. |
+| Stage 9: Registrar final approval workflow | DONE | Registrar list/view/decision endpoints and connected frontend dashboard are implemented. |
 
 ## 3. Current Missing/Partial Stages
 
 | Stage | Status | Notes |
 |---|---|---|
-| Stage 9: Registrar final approval workflow | MISSING | Registrar dashboard is mock UI only. No registrar backend controller/service/endpoints exist. |
 | Stage 10: Admin management and final requirements | PARTIAL | Admin can create users, but full admin CRUD/monitoring/search is missing. Tests are missing. Docker Compose exists but was not verified in this audit. |
 
 ## 4. Implemented Branches and Commits
@@ -89,6 +89,7 @@ Important feature branches on `new-origin`:
 - `fetch/clearance-request-workflow`: student request creation/tracking
 - `fetch/office-staff-review-workflow`: office review workflow
 - `fetch/auth-flow-role-guard-and-password-reset`: protected frontend routing, role-aware login, admin user creation, password reset
+- `fetch/registrar-final-approval-workflow`: registrar final approval workflow
 
 Auth-flow branch commits:
 
@@ -131,13 +132,18 @@ bf96c8c secure frontend routes with role guards
 - `GET /api/office/clearance-steps/{id}` - OFFICE_STAFF only
 - `PATCH /api/office/clearance-steps/{id}/review` - OFFICE_STAFF only
 
-No registrar endpoints are implemented yet.
+### RegistrarClearanceController
+
+- `GET /api/registrar/clearance-requests?page=0&size=10&status=READY_FOR_REGISTRAR&requestType=GRADUATION&studentId=ATE&keyword=student` - REGISTRAR only
+- `GET /api/registrar/clearance-requests/{id}` - REGISTRAR only
+- `PATCH /api/registrar/clearance-requests/{id}/decision` - REGISTRAR only
 
 ## 6. Frontend Route/Auth Summary
 
 - Public normal flow is login only.
 - `ForgotPasswordPage` and `ResetPasswordPage` are public utility pages.
 - `RegisterPage.tsx` still exists in the source tree, but it is not imported by `App.tsx` and is not exposed in normal navigation.
+- `RegistrarDashboardPage.tsx` is connected to registrar APIs and supports filters, request review, approval, and rejection.
 - Protected routes are implemented in `App.tsx` without React Router:
   - `/student` requires `STUDENT`
   - `/admin` requires `ADMIN`
@@ -214,11 +220,10 @@ Docker Compose:
 
 ## 9. Bugs and Risks
 
-- The cleanup changes should be committed before starting the registrar phase.
+- Registrar final approval has been implemented on `fetch/registrar-final-approval-workflow`.
 - `application.properties` may appear modified due to line-ending metadata; content remains environment-variable based with no real secret default.
 - `GlobalExceptionHandler` exposes safe `IllegalStateException` messages such as missing JWT secret configuration and does not expose stack traces.
-- Tests are missing for auth, admin user creation, student request workflow, office review, and security access rules.
-- Registrar final approval workflow is missing.
+- Tests are missing for auth, admin user creation, student request workflow, office review, registrar final approval, and security access rules.
 - Admin office CRUD, user list/search, request monitoring, and search/filter with multiple parameters are not complete.
 - `RegisterPage.tsx` still exists; not reachable in app, but it may confuse reviewers unless removed or documented.
 - Frontend route guarding is client-side only. Backend security is still the real protection, which is correct.
@@ -241,35 +246,33 @@ Docker Compose:
 | Bean Validation | DONE |
 | Global exception handler | DONE |
 | OpenAPI/Swagger | DONE |
-| Search/filter endpoint with multiple params | PARTIAL |
+| Search/filter endpoint with multiple params | DONE for registrar list filters; broader admin search still missing |
 | Docker Compose deployment | PARTIAL, files exist but not currently verified |
 | JUnit/Mockito/Security tests | MISSING |
-| Registrar final approval | MISSING |
+| Registrar final approval | DONE |
 | Admin CRUD/monitoring | PARTIAL |
 | Clear README | PARTIAL, current but should be updated after final workflows |
 
 ## 11. Recommended Next Phase
 
-Recommended next phase after cleaning/committing current auth-flow fixes:
+Recommended next phase after registrar workflow:
 
 ```text
-fetch/registrar-final-approval-workflow
+fetch/testing-and-admin-monitoring
 ```
 
 Scope:
 
-- Registrar lists only requests with status `READY_FOR_REGISTRAR`.
-- Registrar approves final clearance and sets request status `COMPLETED`.
-- Registrar rejects final clearance with required comment and sets request status `REJECTED`.
-- Registrar review creates `ApprovalLog`.
-- Registrar dashboard connects to real API.
-- Add focused tests for registrar access rules and status transitions.
+- Add focused backend tests for auth, student request workflow, office review, and registrar final approval.
+- Add admin request monitoring/listing if required for final demo.
+- Verify Docker Compose on a machine with Docker installed.
+- Keep admin CRUD small and demo-focused.
 
 Before starting that phase:
 
-1. Confirm this cleanup branch is clean and pushed.
-2. Verify Docker Compose on a machine with Docker installed if needed.
-3. Create `fetch/registrar-final-approval-workflow` from the cleaned auth-flow branch.
+1. Confirm registrar workflow branch is clean and pushed.
+2. Manually test registrar approval and rejection in Swagger/frontend.
+3. Decide whether tests or admin monitoring is more urgent for the presentation.
 
 ## 12. Exact Commands for Me to Run
 
@@ -365,3 +368,14 @@ Password: admin123
 4. Approve or reject assigned steps.
 5. Confirm reject without comment fails.
 6. Confirm already reviewed steps cannot be reviewed again.
+
+### Registrar final approval workflow
+
+1. Approve all non-registrar office steps for a student request.
+2. Confirm the request status becomes `READY_FOR_REGISTRAR`.
+3. Login as `REGISTRAR`.
+4. Open `/registrar`.
+5. Confirm the ready request appears.
+6. Approve the final clearance and confirm request status becomes `COMPLETED`.
+7. For a second ready request, reject with an empty comment and confirm it fails.
+8. Reject with a comment and confirm request status becomes `REJECTED`.
