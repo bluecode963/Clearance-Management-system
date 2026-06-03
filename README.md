@@ -267,6 +267,14 @@ cd backend
 mvn test
 ```
 
+Current backend test coverage includes focused JUnit 5 and Mockito tests for:
+
+- authentication login rules
+- student clearance request creation and duplicate-active-request rules
+- office staff step review rules
+- registrar final approval rules
+- security access checks for protected role endpoints
+
 Frontend build check:
 
 ```bash
@@ -311,3 +319,4 @@ Completed phases:
 - Student clearance request creation and tracking
 - Office staff clearance step review workflow
 - Registrar final approval workflow
+- Backend service and security access tests for implemented workflows
