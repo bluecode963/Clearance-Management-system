@@ -65,12 +65,21 @@ export type ClearanceStepResponse = {
   reviewedAt?: string | null;
 };
 
+export type StudentSummary = {
+  profileId: number;
+  studentId: string;
+  fullName: string;
+  department: string;
+  program: string;
+};
+
 export type ClearanceRequestResponse = {
   id: number;
   requestType: ClearanceType;
   status: string;
   reason?: string | null;
   createdAt: string;
+  student: StudentSummary;
   steps: ClearanceStepResponse[];
 };
 
@@ -235,6 +244,53 @@ export async function getAssignedOfficeSteps(status?: string) {
 
 export async function reviewOfficeStep(stepId: number, decision: 'APPROVED' | 'REJECTED', comment: string) {
   return authorizedJson<OfficeStepReviewResponse>(`/api/office/clearance-steps/${stepId}/review`, {
+    method: 'PATCH',
+    body: JSON.stringify({ decision, comment }),
+  });
+}
+
+export type RegistrarRequestFilters = {
+  status?: string;
+  requestType?: ClearanceType | '';
+  studentId?: string;
+  keyword?: string;
+  page?: number;
+  size?: number;
+};
+
+export async function getRegistrarClearanceRequests(filters: RegistrarRequestFilters = {}) {
+  const query = new URLSearchParams();
+  query.set('page', String(filters.page ?? 0));
+  query.set('size', String(filters.size ?? 10));
+
+  if (filters.status) {
+    query.set('status', filters.status);
+  }
+  if (filters.requestType) {
+    query.set('requestType', filters.requestType);
+  }
+  if (filters.studentId?.trim()) {
+    query.set('studentId', filters.studentId.trim());
+  }
+  if (filters.keyword?.trim()) {
+    query.set('keyword', filters.keyword.trim());
+  }
+
+  return authorizedJson<PageResponse<ClearanceRequestResponse>>(
+    `/api/registrar/clearance-requests?${query.toString()}`
+  );
+}
+
+export async function getRegistrarClearanceRequest(id: number) {
+  return authorizedJson<ClearanceRequestResponse>(`/api/registrar/clearance-requests/${id}`);
+}
+
+export async function decideRegistrarClearance(
+  id: number,
+  decision: 'APPROVED' | 'REJECTED',
+  comment: string
+) {
+  return authorizedJson<ClearanceRequestResponse>(`/api/registrar/clearance-requests/${id}/decision`, {
     method: 'PATCH',
     body: JSON.stringify({ decision, comment }),
   });
