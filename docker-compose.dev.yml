@@ -25,7 +25,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-student_clearance}
       DB_USER: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      JWT_SECRET: ${JWT_SECRET:-student_clearance_docker_jwt_secret_key_2026}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
     ports:
       - "${BACKEND_PORT:-8080}:8080"

@@ -102,7 +102,7 @@ PostgreSQL: localhost:5432
 Production-style stack:
 
 ```bash
-POSTGRES_PASSWORD=change-me JWT_SECRET=change-me docker compose -f docker-compose.prod.yml up --build
+POSTGRES_PASSWORD=change-me JWT_SECRET=student_clearance_docker_jwt_secret_key_2026 docker compose -f docker-compose.prod.yml up --build
 ```
 
 Production URL:
@@ -173,6 +173,16 @@ Example admin user creation body:
 
 Forgot password is development-friendly. It always returns a generic message and returns the reset token only when the backend runs with the `dev` profile.
 
+Local development admin seed:
+
+```text
+Email: admin@test.com
+Password: admin123
+Role: ADMIN
+```
+
+This account is for local development/demo only and is created by Flyway with a BCrypt-hashed password.
+
 Student clearance request endpoints:
 
 ```text
@@ -218,6 +228,7 @@ JWT_EXPIRATION_MS
 ```
 
 Use a `JWT_SECRET` value of at least 32 characters when running login or registration.
+Docker Compose development files default to `student_clearance_docker_jwt_secret_key_2026`, and you can override it with the `JWT_SECRET` environment variable.
 
 ## Run Tests
 
