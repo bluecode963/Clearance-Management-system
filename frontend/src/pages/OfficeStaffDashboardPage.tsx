@@ -1,5 +1,6 @@
 import { MouseEvent, useEffect, useMemo, useState } from 'react';
 import { PageShell } from '../components/PageShell';
+import { RoleActivityPanel } from '../components/RoleActivityPanel';
 import {
   getAssignedOfficeSteps,
   reviewOfficeStep,
@@ -66,6 +67,8 @@ export function OfficeStaffDashboardPage() {
   return (
     <PageShell title="Office Staff Dashboard" subtitle="Review only clearance steps assigned to the staff office.">
       <div className="space-y-6">
+        <RoleActivityPanel role="OFFICE_STAFF" />
+
         <div className="grid gap-4 md:grid-cols-3">
           {metrics.map((metric) => (
             <div key={metric.label} className="rounded border border-slate-200 bg-white p-4 shadow-sm">

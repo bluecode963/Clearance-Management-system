@@ -1,5 +1,6 @@
 import { MouseEvent, useEffect, useMemo, useState } from 'react';
 import { PageShell } from '../components/PageShell';
+import { RoleActivityPanel } from '../components/RoleActivityPanel';
 import {
   decideRegistrarClearance,
   getRegistrarClearanceRequests,
@@ -75,6 +76,8 @@ export function RegistrarDashboardPage() {
   return (
     <PageShell title="Registrar Dashboard" subtitle="Finalize requests only after all required offices approve.">
       <div className="space-y-6">
+        <RoleActivityPanel role="REGISTRAR" />
+
         <div className="grid gap-4 md:grid-cols-3">
           {metrics.map((metric) => (
             <div key={metric.label} className="rounded border border-slate-200 bg-white p-4 shadow-sm">

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { PageShell } from '../components/PageShell';
+import { RoleActivityPanel } from '../components/RoleActivityPanel';
 import {
   createClearanceRequest,
   getMyClearanceRequests,
@@ -68,6 +69,8 @@ export function StudentDashboardPage() {
   return (
     <PageShell title="Student Dashboard" subtitle="Track one clearance request and each required office step.">
       <div className="space-y-6">
+        <RoleActivityPanel role="STUDENT" />
+
         <div className="grid gap-4 md:grid-cols-3">
           {metrics.map((metric) => (
             <div key={metric.label} className="rounded border border-slate-200 bg-white p-4 shadow-sm">
