@@ -107,6 +107,20 @@ export type PageResponse<T> = {
   last: boolean;
 };
 
+export type AdminOverviewResponse = {
+  totalUsers: number;
+  totalStudents: number;
+  totalOfficeStaff: number;
+  totalRegistrars: number;
+  totalAdmins: number;
+  totalClearanceRequests: number;
+  pendingRequests: number;
+  inReviewRequests: number;
+  readyForRegistrarRequests: number;
+  completedRequests: number;
+  rejectedRequests: number;
+};
+
 export async function getHealth() {
   const response = await fetch(`${API_BASE_URL}/api/health`);
 
@@ -218,6 +232,10 @@ export async function createAdminUser(payload: AdminCreateUserPayload) {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+}
+
+export async function getAdminOverview() {
+  return authorizedJson<AdminOverviewResponse>('/api/admin/overview');
 }
 
 export async function createClearanceRequest(payload: ClearanceRequestPayload) {

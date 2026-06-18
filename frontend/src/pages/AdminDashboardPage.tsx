@@ -1,7 +1,14 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { PageShell } from '../components/PageShell';
-import { createAdminUser, type AdminCreateUserPayload, type UserRole } from '../services/api';
+import { RoleActivityPanel } from '../components/RoleActivityPanel';
+import {
+  createAdminUser,
+  getAdminOverview,
+  type AdminCreateUserPayload,
+  type AdminOverviewResponse,
+  type UserRole,
+} from '../services/api';
 
 const defaultForm: AdminCreateUserPayload = {
   fullName: '',
@@ -17,9 +24,22 @@ const defaultForm: AdminCreateUserPayload = {
 
 export function AdminDashboardPage() {
   const [form, setForm] = useState<AdminCreateUserPayload>(defaultForm);
+  const [overview, setOverview] = useState<AdminOverviewResponse | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  async function loadOverview() {
+    try {
+      setOverview(await getAdminOverview());
+    } catch (overviewError) {
+      setError(overviewError instanceof Error ? overviewError.message : 'Could not load admin overview');
+    }
+  }
+
+  useEffect(() => {
+    void loadOverview();
+  }, []);
 
   function updateField<K extends keyof AdminCreateUserPayload>(key: K, value: AdminCreateUserPayload[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -36,6 +56,7 @@ export function AdminDashboardPage() {
       const createdUser = await createAdminUser(payload);
       setMessage(`${createdUser.fullName} was created as ${formatRole(createdUser.role)}.`);
       setForm(defaultForm);
+      await loadOverview();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'Could not create user');
     } finally {
@@ -43,22 +64,30 @@ export function AdminDashboardPage() {
     }
   }
 
+  const metrics = useMemo(
+    () => [
+      { label: 'Total users', value: overview ? String(overview.totalUsers) : '-' },
+      { label: 'Office staff', value: overview ? String(overview.totalOfficeStaff) : '-' },
+      { label: 'Requests ready', value: overview ? String(overview.readyForRegistrarRequests) : '-' },
+    ],
+    [overview]
+  );
+
   return (
     <PageShell title="Admin Dashboard" subtitle="Manage offices, users, and monitor clearance requests.">
       <div className="space-y-8">
+        <RoleActivityPanel role="ADMIN" />
+
         <DashboardLayout
           role="ADMIN"
           heading="System overview"
           description="Administrative users can create accounts for students, office staff, registrars, and other admins."
-          metrics={[
-            { label: 'Active offices', value: '5' },
-            { label: 'User creation', value: 'Admin only' },
-            { label: 'Open requests', value: 'Tracked' },
-          ]}
+          metrics={metrics}
           items={[
-            { title: 'Office setup', owner: 'Registrar', status: 'Seeded' },
-            { title: 'User management', owner: 'Admin', status: 'Enabled' },
-            { title: 'Request monitoring', owner: 'Admin', status: 'Prepared' },
+            { title: 'Students', owner: 'Admin', status: overview ? String(overview.totalStudents) : '-' },
+            { title: 'Registrars', owner: 'Admin', status: overview ? String(overview.totalRegistrars) : '-' },
+            { title: 'Completed requests', owner: 'System', status: overview ? String(overview.completedRequests) : '-' },
+            { title: 'Rejected requests', owner: 'System', status: overview ? String(overview.rejectedRequests) : '-' },
           ]}
         />
 

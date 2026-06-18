@@ -19,6 +19,8 @@ public interface ClearanceRequestRepository extends JpaRepository<ClearanceReque
 
     boolean existsByStudentProfileUserIdAndStatusIn(Long userId, Collection<ClearanceRequestStatus> statuses);
 
+    long countByStatus(ClearanceRequestStatus status);
+
     @EntityGraph(attributePaths = {"studentProfile", "studentProfile.user"})
     Optional<ClearanceRequest> findByIdAndStudentProfileUserId(Long id, Long userId);
 
