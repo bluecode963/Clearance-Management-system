@@ -1,16 +1,15 @@
 # Project Status Review
 
-Review date: 2026-06-02
+Review date: 2026-06-17
 
 ## 1. Current Git State
 
-- Current branch: `fetch/auth-flow-role-guard-and-password-reset`
+- Current branch: `fetch/role-activities-and-workflow-polish`
 - Target remote: `new-origin https://github.com/bluecode963/Clearance-Management-system.git`
 - `origin` is still configured for `https://github.com/Yabu920/se4801-Clearance-management-system.git`; do not push there.
-- Current branch exists on `new-origin` and the latest pushed commit is `068b46b update readme for secure auth flow`.
-- Working tree is not clean.
-- Current cleanup includes the development admin seed, Docker JWT default fix, authentication configuration error handling, and this report update.
-- Cleanup verification completed on 2026-06-02: backend package, backend test lifecycle, and frontend build passed.
+- Current branch was created from `fetch/registrar-final-approval-workflow`.
+- This branch adds role activity guidance, dashboard workflow polish, and a small admin overview endpoint.
+- Verification for this branch is recorded after the build/test commands are run.
 
 Local branches:
 
@@ -25,6 +24,8 @@ fetch/frontend-demo-ui
 fetch/office-staff-review-workflow
 fetch/persistence-flyway
 fetch/project-docs-environment
+fetch/registrar-final-approval-workflow
+fetch/role-activities-and-workflow-polish
 main
 ```
 
@@ -42,17 +43,13 @@ new-origin/fetch/frontend-demo-ui
 new-origin/fetch/office-staff-review-workflow
 new-origin/fetch/persistence-flyway
 new-origin/fetch/project-docs-environment
+new-origin/fetch/registrar-final-approval-workflow
 ```
 
 Latest current-branch commits:
 
 ```text
-068b46b update readme for secure auth flow
-bf96c8c secure frontend routes with role guards
-8aa20c1 add password reset workflow
-423b0bd restrict user creation to admin
-6c00ba9 add role-aware login validation
-e289bbd add project status review and improvement plan
+Branch commits will be listed after this role-activity polish branch is committed.
 ```
 
 ## 2. Current Completed Stages
@@ -68,12 +65,13 @@ e289bbd add project status review and improvement plan
 | Stage 7: Student clearance request workflow | DONE | Student creates one active request, steps auto-created, own list/detail endpoints and frontend integration. |
 | Stage 8: Office staff review workflow | DONE | Staff list/view/review assigned office steps; reject comment required; reviewed steps blocked; request status updates. |
 | Stage 9: Registrar final approval workflow | DONE | Registrar list/view/decision endpoints and connected frontend dashboard are implemented. |
+| Stage 10: Role activities and workflow polish | DONE | Dashboards show allowed/restricted role activities and workflow steps; admin overview totals are available. |
 
 ## 3. Current Missing/Partial Stages
 
 | Stage | Status | Notes |
 |---|---|---|
-| Stage 10: Admin management and final requirements | PARTIAL | Admin can create users, but full admin CRUD/monitoring/search is missing. Tests are missing. Docker Compose exists but was not verified in this audit. |
+| Stage 11: Admin management and final requirements | PARTIAL | Admin can create users and view overview totals, but full admin CRUD/search is missing. Docker Compose exists but was not verified in this audit. |
 
 ## 4. Implemented Branches and Commits
 
@@ -120,6 +118,10 @@ bf96c8c secure frontend routes with role guards
 
 - `POST /api/admin/users` - ADMIN only
 
+### AdminOverviewController
+
+- `GET /api/admin/overview` - ADMIN only
+
 ### ClearanceRequestController
 
 - `POST /api/clearance-requests` - STUDENT only
@@ -155,6 +157,43 @@ bf96c8c secure frontend routes with role guards
 - Token and user are stored in local storage.
 - Frontend does not decode JWT expiry. Expired token handling depends on backend 401 responses.
 
+## 6A. Role-Based Activities and Workflow
+
+### Permission Matrix
+
+| Activity | Admin | Student | Office Staff | Registrar |
+|---|---|---|---|---|
+| Login | Yes | Yes | Yes | Yes |
+| Create users | Yes | No | No | No |
+| Create clearance request | No | Yes | No | No |
+| View own request | No | Yes | No | No |
+| Review assigned office step | No | No | Yes | No |
+| Final approve/reject clearance | No | No | No | Yes |
+| Reset password | Yes | Yes | Yes | Yes |
+
+### Full Workflow
+
+```text
+Admin creates users
+-> Student logs in
+-> Student creates clearance request
+-> System creates office steps
+-> Office staff review assigned steps
+-> If any office rejects, request becomes REJECTED
+-> If all required offices approve, request becomes READY_FOR_REGISTRAR
+-> Registrar reviews request
+-> Registrar approves or rejects final clearance
+-> If approved, request becomes COMPLETED
+-> Student views final status
+```
+
+Dashboard updates in this branch:
+
+- Admin dashboard shows role guidance, create-user form, and live overview totals.
+- Student dashboard shows role guidance, request creation, own requests, and step progress.
+- Office staff dashboard shows role guidance, assigned steps, status filter, comment field, and approve/reject actions.
+- Registrar dashboard shows role guidance, filters, request list, comments, and final approve/reject actions.
+
 ## 7. Database Migration Summary
 
 Migration files currently present:
@@ -188,7 +227,7 @@ Backend package:
 ```text
 cd backend
 mvn clean package -DskipTests
-Result: BUILD SUCCESS on 2026-06-02
+Result: BUILD SUCCESS on 2026-06-17
 ```
 
 Backend tests:
@@ -196,10 +235,10 @@ Backend tests:
 ```text
 cd backend
 mvn test
-Result: BUILD SUCCESS on 2026-06-02
+Result: BUILD SUCCESS on 2026-06-17
 ```
 
-Important test note: there are no backend test classes under `backend/src/test`, so `mvn test` currently verifies compilation/lifecycle only, not real behavior.
+Important test note: there are no backend test classes under `backend/src/test` on this branch, so `mvn test` currently verifies compilation/lifecycle only, not real behavior.
 
 Frontend:
 
@@ -207,7 +246,7 @@ Frontend:
 cd frontend
 npm install
 npm run build
-Result: completed successfully on 2026-06-02
+Result: completed successfully on 2026-06-17
 ```
 
 The shell tool did not print normal npm build details, but both commands exited with code 0.
@@ -223,8 +262,8 @@ Docker Compose:
 - Registrar final approval has been implemented on `fetch/registrar-final-approval-workflow`.
 - `application.properties` may appear modified due to line-ending metadata; content remains environment-variable based with no real secret default.
 - `GlobalExceptionHandler` exposes safe `IllegalStateException` messages such as missing JWT secret configuration and does not expose stack traces.
-- Tests are missing for auth, admin user creation, student request workflow, office review, registrar final approval, and security access rules.
-- Admin office CRUD, user list/search, request monitoring, and search/filter with multiple parameters are not complete.
+- Tests are missing on this branch for auth, admin user creation, student request workflow, office review, registrar final approval, and security access rules.
+- Admin office CRUD and user list/search are not complete. A basic admin overview endpoint is now available.
 - `RegisterPage.tsx` still exists; not reachable in app, but it may confuse reviewers unless removed or documented.
 - Frontend route guarding is client-side only. Backend security is still the real protection, which is correct.
 - Local storage token storage is acceptable for this course demo but not ideal for production.
@@ -250,21 +289,22 @@ Docker Compose:
 | Docker Compose deployment | PARTIAL, files exist but not currently verified |
 | JUnit/Mockito/Security tests | MISSING |
 | Registrar final approval | DONE |
-| Admin CRUD/monitoring | PARTIAL |
-| Clear README | PARTIAL, current but should be updated after final workflows |
+| Admin CRUD/monitoring | PARTIAL, create user and overview totals exist |
+| Clear README | DONE for current role workflow |
 
 ## 11. Recommended Next Phase
 
-Recommended next phase after registrar workflow:
+Recommended next phase after role activity polish:
 
 ```text
-fetch/testing-and-admin-monitoring
+fetch/testing-and-quality-improvements
 ```
 
 Scope:
 
 - Add focused backend tests for auth, student request workflow, office review, and registrar final approval.
-- Add admin request monitoring/listing if required for final demo.
+- Add tests for admin overview and create-user behavior.
+- Add focused tests for auth, student request workflow, office review, and registrar final approval.
 - Verify Docker Compose on a machine with Docker installed.
 - Keep admin CRUD small and demo-focused.
 

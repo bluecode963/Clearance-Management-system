@@ -258,6 +258,52 @@ JWT_EXPIRATION_MS
 Use a `JWT_SECRET` value of at least 32 characters when running login or registration.
 Docker Compose development files default to `student_clearance_docker_jwt_secret_key_2026`, and you can override it with the `JWT_SECRET` environment variable.
 
+## Role-Based Activities and Workflow
+
+### Admin
+
+Admins can login as `ADMIN`, create users, create student accounts, create office staff accounts, create registrar accounts, create admin accounts, assign office staff users to offices, view role/activity guidance, and view basic system overview totals. Admins must not create student clearance requests, perform office staff approval, or make registrar final decisions.
+
+### Student
+
+Students can login as `STUDENT`, create one active clearance request, choose `GRADUATION`, `WITHDRAWAL`, or `TRANSFER`, view their own requests, view request details, track office step progress, view comments and rejection reasons, and view final status. Students must not access admin, office staff, or registrar activities.
+
+### Office Staff
+
+Office staff can login as `OFFICE_STAFF`, view only clearance steps assigned to their own office, filter by status, approve assigned pending steps, and reject assigned pending steps with a required comment. Office staff cannot review other offices' steps, review already approved or rejected steps, create users, create student requests, or make registrar final decisions.
+
+### Registrar
+
+Registrars can login as `REGISTRAR`, view requests ready for registrar review, filter requests by status, request type, student ID, and keyword, view request details and office steps, final approve ready requests, and final reject ready requests with a required comment. Registrars cannot approve in-review requests, approve requests with pending or rejected office steps, decide already completed or rejected requests, create users, or perform office step review.
+
+### Full Clearance Workflow
+
+```text
+Admin creates users
+-> Student logs in
+-> Student creates clearance request
+-> System creates office steps
+-> Office staff review assigned steps
+-> If any office rejects, request becomes REJECTED
+-> If all required offices approve, request becomes READY_FOR_REGISTRAR
+-> Registrar reviews request
+-> Registrar approves or rejects final clearance
+-> If approved, request becomes COMPLETED
+-> Student views final status
+```
+
+### Permission Matrix
+
+| Activity | Admin | Student | Office Staff | Registrar |
+|---|---|---|---|---|
+| Login | Yes | Yes | Yes | Yes |
+| Create users | Yes | No | No | No |
+| Create clearance request | No | Yes | No | No |
+| View own request | No | Yes | No | No |
+| Review assigned office step | No | No | Yes | No |
+| Final approve/reject clearance | No | No | No | Yes |
+| Reset password | Yes | Yes | Yes | Yes |
+
 ## Run Tests
 
 Backend:
@@ -311,3 +357,4 @@ Completed phases:
 - Student clearance request creation and tracking
 - Office staff clearance step review workflow
 - Registrar final approval workflow
+- Role-based dashboard activity guidance and admin overview
