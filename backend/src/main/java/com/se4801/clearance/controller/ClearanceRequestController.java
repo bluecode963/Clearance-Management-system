@@ -1,6 +1,7 @@
 package com.se4801.clearance.controller;
 
 import com.se4801.clearance.dto.request.CreateClearanceRequest;
+import com.se4801.clearance.dto.request.StudentStepResubmissionRequest;
 import com.se4801.clearance.dto.response.ClearanceRequestResponse;
 import com.se4801.clearance.dto.response.PageResponse;
 import com.se4801.clearance.security.CustomUserPrincipal;
@@ -17,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -64,5 +66,15 @@ public class ClearanceRequestController {
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         return ResponseEntity.ok(clearanceRequestService.getMyRequest(id, principal));
+    }
+
+    @PatchMapping("/steps/{stepId}/resubmit")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ClearanceRequestResponse> resubmitStep(
+            @PathVariable Long stepId,
+            @Valid @RequestBody StudentStepResubmissionRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        return ResponseEntity.ok(clearanceRequestService.resubmitStep(stepId, request, principal));
     }
 }

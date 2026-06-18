@@ -20,6 +20,9 @@ public interface ClearanceStepRepository extends JpaRepository<ClearanceStep, Lo
     @EntityGraph(attributePaths = {"office", "clearanceRequest", "clearanceRequest.studentProfile", "clearanceRequest.studentProfile.user", "reviewedBy"})
     Optional<ClearanceStep> findByIdAndOfficeId(Long id, Long officeId);
 
+    @EntityGraph(attributePaths = {"office", "clearanceRequest", "clearanceRequest.studentProfile", "clearanceRequest.studentProfile.user", "reviewedBy"})
+    Optional<ClearanceStep> findByIdAndClearanceRequestStudentProfileUserId(Long id, Long userId);
+
     @EntityGraph(attributePaths = "office")
     List<ClearanceStep> findByClearanceRequestIdOrderByOfficeIdAsc(Long clearanceRequestId);
 
