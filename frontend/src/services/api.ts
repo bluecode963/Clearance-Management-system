@@ -266,6 +266,13 @@ export async function getClearanceRequestById(id: number) {
   return authorizedJson<ClearanceRequestResponse>(`/api/clearance-requests/${id}`);
 }
 
+export async function resubmitClearanceStep(stepId: number, correctionNote: string) {
+  return authorizedJson<ClearanceRequestResponse>(`/api/clearance-requests/steps/${stepId}/resubmit`, {
+    method: 'PATCH',
+    body: JSON.stringify({ correctionNote }),
+  });
+}
+
 export async function getAssignedOfficeSteps(status?: string) {
   const query = status ? `?status=${status}` : '';
   return authorizedJson<PageResponse<OfficeStepReviewResponse>>(`/api/office/clearance-steps${query}`);

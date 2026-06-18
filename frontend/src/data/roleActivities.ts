@@ -41,6 +41,7 @@ export const roleActivities: Record<UserRole, RoleActivityInfo> = {
       'Select graduation, withdrawal, or transfer request type',
       'View own clearance requests and office step progress',
       'View comments, rejection reasons, and final status',
+      'Request re-review only for steps that need correction',
     ],
     restrictedActivities: [
       'Cannot create users',
@@ -63,11 +64,13 @@ export const roleActivities: Record<UserRole, RoleActivityInfo> = {
       'View assigned office clearance steps',
       'Filter assigned steps by status',
       'Approve assigned pending steps',
-      'Reject assigned pending steps with a required comment',
+      'Review resubmitted steps for their own office',
+      'Reject assigned pending or resubmitted steps with a required comment',
     ],
     restrictedActivities: [
       'Cannot review steps from other offices',
       'Cannot review already approved or rejected steps',
+      'Cannot review needs-correction steps until the student resubmits',
       'Cannot create users or student requests',
       'Cannot make registrar final decisions',
     ],

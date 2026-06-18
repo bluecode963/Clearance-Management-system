@@ -88,6 +88,8 @@ export function OfficeStaffDashboardPage() {
             >
               <option value="">All</option>
               <option value="PENDING">Pending</option>
+              <option value="RESUBMITTED">Resubmitted</option>
+              <option value="NEEDS_CORRECTION">Needs correction</option>
               <option value="APPROVED">Approved</option>
               <option value="REJECTED">Rejected</option>
               <option value="WAITING">Waiting</option>
@@ -137,7 +139,7 @@ export function OfficeStaffDashboardPage() {
 
                   {step.comment && <p className="rounded bg-slate-50 px-3 py-2 text-sm text-slate-600">{step.comment}</p>}
 
-                  {step.status === 'PENDING' ? (
+                  {(step.status === 'PENDING' || step.status === 'RESUBMITTED') ? (
                     <form className="space-y-3" onSubmit={(event) => event.preventDefault()}>
                       <textarea
                         className="min-h-20 w-full rounded border border-slate-300 px-3 py-2 text-sm"
@@ -165,6 +167,10 @@ export function OfficeStaffDashboardPage() {
                         </button>
                       </div>
                     </form>
+                  ) : step.status === 'NEEDS_CORRECTION' ? (
+                    <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                      Waiting for student correction before this office can review again.
+                    </p>
                   ) : (
                     <p className="text-sm text-slate-500">
                       Reviewed {step.reviewedAt ? new Date(step.reviewedAt).toLocaleString() : 'recently'}

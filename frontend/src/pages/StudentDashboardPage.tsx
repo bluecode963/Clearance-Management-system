@@ -4,6 +4,7 @@ import { RoleActivityPanel } from '../components/RoleActivityPanel';
 import {
   createClearanceRequest,
   getMyClearanceRequests,
+  resubmitClearanceStep,
   type ClearanceRequestResponse,
   type ClearanceType,
 } from '../services/api';
@@ -12,8 +13,10 @@ export function StudentDashboardPage() {
   const [requestType, setRequestType] = useState<ClearanceType>('GRADUATION');
   const [reason, setReason] = useState('');
   const [requests, setRequests] = useState<ClearanceRequestResponse[]>([]);
+  const [correctionNotes, setCorrectionNotes] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [resubmittingStepId, setResubmittingStepId] = useState<number | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -52,6 +55,23 @@ export function StudentDashboardPage() {
       setError(formatStudentRequestError(requestError));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleResubmit(stepId: number) {
+    setMessage('');
+    setError('');
+    setResubmittingStepId(stepId);
+
+    try {
+      await resubmitClearanceStep(stepId, correctionNotes[stepId] ?? '');
+      setMessage('Correction submitted. Waiting for office re-review.');
+      setCorrectionNotes((current) => ({ ...current, [stepId]: '' }));
+      await loadRequests();
+    } catch (resubmitError) {
+      setError(resubmitError instanceof Error ? resubmitError.message : 'Could not request re-review');
+    } finally {
+      setResubmittingStepId(null);
     }
   }
 
@@ -144,8 +164,32 @@ export function StudentDashboardPage() {
                     {request.steps.map((step) => (
                       <div key={step.id} className="rounded border border-slate-200 px-3 py-2">
                         <p className="text-sm font-medium text-slate-900">{step.officeName}</p>
-                        <p className="text-xs font-semibold text-slate-500">{step.status}</p>
+                        <p className="text-xs font-semibold text-slate-500">{formatEnum(step.status)}</p>
                         {step.comment && <p className="mt-1 text-xs text-slate-500">{step.comment}</p>}
+                        {step.status === 'NEEDS_CORRECTION' && request.status !== 'COMPLETED' && request.status !== 'REJECTED' && (
+                          <div className="mt-3 space-y-2">
+                            <textarea
+                              className="min-h-20 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                              maxLength={500}
+                              onChange={(event) => setCorrectionNotes((current) => ({ ...current, [step.id]: event.target.value }))}
+                              placeholder={`Correction note for ${step.officeName}`}
+                              value={correctionNotes[step.id] ?? ''}
+                            />
+                            <button
+                              className="rounded bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                              disabled={resubmittingStepId === step.id}
+                              onClick={() => void handleResubmit(step.id)}
+                              type="button"
+                            >
+                              {resubmittingStepId === step.id ? 'Submitting...' : 'Request re-review'}
+                            </button>
+                          </div>
+                        )}
+                        {step.status === 'RESUBMITTED' && (
+                          <p className="mt-2 rounded bg-blue-50 px-2 py-1 text-xs text-blue-700">
+                            Correction submitted. Waiting for office re-review.
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
