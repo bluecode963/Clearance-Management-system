@@ -127,6 +127,7 @@ bf96c8c secure frontend routes with role guards
 - `POST /api/clearance-requests` - STUDENT only
 - `GET /api/clearance-requests/my?page=0&size=10` - STUDENT only
 - `GET /api/clearance-requests/{id}` - STUDENT only
+- `PATCH /api/clearance-requests/steps/{stepId}/resubmit` - STUDENT only
 
 ### OfficeReviewController
 
@@ -168,6 +169,8 @@ bf96c8c secure frontend routes with role guards
 | Create clearance request | No | Yes | No | No |
 | View own request | No | Yes | No | No |
 | Review assigned office step | No | No | Yes | No |
+| Request re-review for corrected step | No | Yes | No | No |
+| Review resubmitted office step | No | No | Yes | No |
 | Final approve/reject clearance | No | No | No | Yes |
 | Reset password | Yes | Yes | Yes | Yes |
 
@@ -179,7 +182,7 @@ Admin creates users
 -> Student creates clearance request
 -> System creates office steps
 -> Office staff review assigned steps
--> If any office rejects, request becomes REJECTED
+-> If any office requests correction, request becomes NEEDS_CORRECTION
 -> If all required offices approve, request becomes READY_FOR_REGISTRAR
 -> Registrar reviews request
 -> Registrar approves or rejects final clearance
@@ -187,11 +190,28 @@ Admin creates users
 -> Student views final status
 ```
 
+### Student Correction / Resubmission Workflow
+
+```text
+Office staff rejects one office step
+-> Request becomes NEEDS_CORRECTION
+-> Student views rejection reason
+-> Student fixes only that office issue
+-> Student requests re-review only for that office step
+-> That step becomes RESUBMITTED
+-> Only the same office reviews again
+-> If approved, clearance continues
+-> If all offices approve, request becomes READY_FOR_REGISTRAR
+-> Registrar gives final decision
+```
+
+Approved office steps remain approved during resubmission. Office staff review uses `NEEDS_CORRECTION` for correctable office issues, while final `REJECTED` is reserved for registrar final rejection.
+
 Dashboard updates in this branch:
 
 - Admin dashboard shows role guidance, create-user form, and live overview totals.
-- Student dashboard shows role guidance, request creation, own requests, and step progress.
-- Office staff dashboard shows role guidance, assigned steps, status filter, comment field, and approve/reject actions.
+- Student dashboard shows role guidance, request creation, own requests, step progress, and step re-review actions.
+- Office staff dashboard shows role guidance, assigned steps, status filter, comment field, approve/reject actions, and resubmitted steps.
 - Registrar dashboard shows role guidance, filters, request list, comments, and final approve/reject actions.
 
 ## 7. Database Migration Summary

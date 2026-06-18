@@ -189,6 +189,7 @@ Student clearance request endpoints:
 POST /api/clearance-requests
 GET  /api/clearance-requests/my?page=0&size=10
 GET  /api/clearance-requests/{id}
+PATCH /api/clearance-requests/steps/{stepId}/resubmit
 ```
 
 Only users with the `STUDENT` role can create and view their own clearance requests. When a student creates a request, the backend automatically creates clearance steps for active offices seeded by Flyway.
@@ -284,13 +285,30 @@ Admin creates users
 -> Student creates clearance request
 -> System creates office steps
 -> Office staff review assigned steps
--> If any office rejects, request becomes REJECTED
+-> If any office requests correction, request becomes NEEDS_CORRECTION
 -> If all required offices approve, request becomes READY_FOR_REGISTRAR
 -> Registrar reviews request
 -> Registrar approves or rejects final clearance
 -> If approved, request becomes COMPLETED
 -> Student views final status
 ```
+
+### Student Correction / Resubmission Workflow
+
+```text
+Office staff rejects one office step
+-> Request becomes NEEDS_CORRECTION
+-> Student views rejection reason
+-> Student fixes only that office issue
+-> Student requests re-review only for that office step
+-> That step becomes RESUBMITTED
+-> Only the same office reviews again
+-> If approved, clearance continues
+-> If all offices approve, request becomes READY_FOR_REGISTRAR
+-> Registrar gives final decision
+```
+
+Approved offices stay approved and do not review again. Office staff rejection means a correction is needed, not a final clearance rejection. Final `REJECTED` status is reserved for registrar final rejection.
 
 ### Permission Matrix
 
@@ -301,6 +319,8 @@ Admin creates users
 | Create clearance request | No | Yes | No | No |
 | View own request | No | Yes | No | No |
 | Review assigned office step | No | No | Yes | No |
+| Request re-review for corrected step | No | Yes | No | No |
+| Review resubmitted office step | No | No | Yes | No |
 | Final approve/reject clearance | No | No | No | Yes |
 | Reset password | Yes | Yes | Yes | Yes |
 
