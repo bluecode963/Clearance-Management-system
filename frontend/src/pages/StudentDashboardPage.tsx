@@ -166,8 +166,11 @@ export function StudentDashboardPage() {
                         <p className="text-sm font-medium text-slate-900">{step.officeName}</p>
                         <p className="text-xs font-semibold text-slate-500">{formatEnum(step.status)}</p>
                         {step.comment && <p className="mt-1 text-xs text-slate-500">{step.comment}</p>}
-                        {step.status === 'NEEDS_CORRECTION' && request.status !== 'COMPLETED' && request.status !== 'REJECTED' && (
+                        {canResubmitStep(step, request.status) && (
                           <div className="mt-3 space-y-2">
+                            <p className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-700">
+                              This office needs your correction. Submit a note to send it back to the same office for re-review.
+                            </p>
                             <textarea
                               className="min-h-20 w-full rounded border border-slate-300 px-3 py-2 text-sm"
                               maxLength={500}
@@ -181,7 +184,7 @@ export function StudentDashboardPage() {
                               onClick={() => void handleResubmit(step.id)}
                               type="button"
                             >
-                              {resubmittingStepId === step.id ? 'Submitting...' : 'Request re-review'}
+                              {resubmittingStepId === step.id ? 'Submitting...' : 'Resubmit to office'}
                             </button>
                           </div>
                         )}
@@ -205,6 +208,16 @@ export function StudentDashboardPage() {
 
 function formatEnum(value: string) {
   return value.replace(/_/g, ' ');
+}
+
+function canResubmitStep(step: { officeName: string; status: string }, requestStatus: string) {
+  if (step.officeName.toLowerCase() === 'registrar') {
+    return false;
+  }
+  if (requestStatus === 'COMPLETED' || requestStatus === 'CANCELLED') {
+    return false;
+  }
+  return step.status === 'NEEDS_CORRECTION' || step.status === 'REJECTED';
 }
 
 function formatStudentRequestError(error: unknown) {

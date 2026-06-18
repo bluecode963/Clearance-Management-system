@@ -135,8 +135,8 @@ public class ClearanceRequestService {
                 )
                 .orElseThrow(() -> new ResourceNotFoundException("Clearance step not found for your request"));
 
-        if (step.getStatus() != ClearanceStepStatus.NEEDS_CORRECTION) {
-            throw new BusinessRuleException("Only steps needing correction can be resubmitted");
+        if (!canStudentResubmit(step)) {
+            throw new BusinessRuleException("Only office steps needing correction can be resubmitted");
         }
 
         User student = userRepository.findById(principal.getId())
@@ -190,7 +190,8 @@ public class ClearanceRequestService {
         List<ClearanceStep> steps = clearanceStepRepository.findByClearanceRequestIdOrderByOfficeIdAsc(request.getId());
         boolean hasOtherCorrection = steps.stream()
                 .filter(step -> !isRegistrarStep(step))
-                .anyMatch(step -> step.getStatus() == ClearanceStepStatus.NEEDS_CORRECTION);
+                .anyMatch(step -> step.getStatus() == ClearanceStepStatus.NEEDS_CORRECTION
+                        || step.getStatus() == ClearanceStepStatus.REJECTED);
 
         request.setStatus(hasOtherCorrection
                 ? ClearanceRequestStatus.NEEDS_CORRECTION
@@ -215,5 +216,17 @@ public class ClearanceRequestService {
 
     private boolean isRegistrarStep(ClearanceStep step) {
         return "Registrar".equalsIgnoreCase(step.getOffice().getOfficeName());
+    }
+
+    private boolean canStudentResubmit(ClearanceStep step) {
+        ClearanceRequest clearanceRequest = step.getClearanceRequest();
+        if (isRegistrarStep(step)
+                || clearanceRequest.getStatus() == ClearanceRequestStatus.COMPLETED
+                || clearanceRequest.getStatus() == ClearanceRequestStatus.CANCELLED) {
+            return false;
+        }
+
+        return step.getStatus() == ClearanceStepStatus.NEEDS_CORRECTION
+                || step.getStatus() == ClearanceStepStatus.REJECTED;
     }
 }
