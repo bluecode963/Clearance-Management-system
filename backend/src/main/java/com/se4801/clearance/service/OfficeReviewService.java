@@ -83,7 +83,7 @@ public class OfficeReviewService {
 
         ClearanceStepStatus newStatus = request.decision() == ReviewDecision.APPROVED
                 ? ClearanceStepStatus.APPROVED
-                : ClearanceStepStatus.REJECTED;
+                : ClearanceStepStatus.NEEDS_CORRECTION;
 
         step.setStatus(newStatus);
         step.setComment(normalizeComment(request.comment()));
@@ -124,6 +124,12 @@ public class OfficeReviewService {
         if (step.getStatus() == ClearanceStepStatus.APPROVED || step.getStatus() == ClearanceStepStatus.REJECTED) {
             throw new BusinessRuleException("This clearance step has already been reviewed");
         }
+        if (step.getStatus() == ClearanceStepStatus.NEEDS_CORRECTION) {
+            throw new BusinessRuleException("This clearance step is waiting for student correction");
+        }
+        if (step.getStatus() != ClearanceStepStatus.PENDING && step.getStatus() != ClearanceStepStatus.RESUBMITTED) {
+            throw new BusinessRuleException("Only pending or resubmitted clearance steps can be reviewed");
+        }
         if (request.decision() == ReviewDecision.REJECTED && isBlank(request.comment())) {
             throw new BusinessRuleException("Comment is required when rejecting a clearance step");
         }
@@ -143,10 +149,13 @@ public class OfficeReviewService {
     private void updateParentRequestStatus(ClearanceRequest request) {
         List<ClearanceStep> steps = clearanceStepRepository.findByClearanceRequestIdOrderByOfficeIdAsc(request.getId());
 
-        if (steps.stream().anyMatch(step -> step.getStatus() == ClearanceStepStatus.REJECTED)) {
-            request.setStatus(ClearanceRequestStatus.REJECTED);
-        } else if (steps.stream().filter(step -> !isRegistrarStep(step))
-                .allMatch(step -> step.getStatus() == ClearanceStepStatus.APPROVED)) {
+        List<ClearanceStep> officeSteps = steps.stream()
+                .filter(step -> !isRegistrarStep(step))
+                .toList();
+
+        if (officeSteps.stream().anyMatch(step -> step.getStatus() == ClearanceStepStatus.NEEDS_CORRECTION)) {
+            request.setStatus(ClearanceRequestStatus.NEEDS_CORRECTION);
+        } else if (officeSteps.stream().allMatch(step -> step.getStatus() == ClearanceStepStatus.APPROVED)) {
             request.setStatus(ClearanceRequestStatus.READY_FOR_REGISTRAR);
         } else {
             request.setStatus(ClearanceRequestStatus.IN_REVIEW);

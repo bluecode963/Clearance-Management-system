@@ -135,10 +135,6 @@ public class RegistrarClearanceService {
         }
 
         List<ClearanceStep> steps = clearanceStepRepository.findByClearanceRequestIdOrderByOfficeIdAsc(request.getId());
-        if (steps.stream().anyMatch(step -> !isRegistrarStep(step) && step.getStatus() == ClearanceStepStatus.REJECTED)) {
-            throw new BusinessRuleException("Registrar cannot approve a request with a rejected office step");
-        }
-
         boolean allOfficeStepsApproved = steps.stream()
                 .filter(step -> !isRegistrarStep(step))
                 .allMatch(step -> step.getStatus() == ClearanceStepStatus.APPROVED);
