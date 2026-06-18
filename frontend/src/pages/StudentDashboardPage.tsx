@@ -49,7 +49,7 @@ export function StudentDashboardPage() {
       setReason('');
       await loadRequests();
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Could not create request');
+      setError(formatStudentRequestError(requestError));
     } finally {
       setSubmitting(false);
     }
@@ -161,4 +161,12 @@ export function StudentDashboardPage() {
 
 function formatEnum(value: string) {
   return value.replace(/_/g, ' ');
+}
+
+function formatStudentRequestError(error: unknown) {
+  const message = error instanceof Error ? error.message : 'Could not create request';
+  if (message.toLowerCase().includes('student profile')) {
+    return `${message}. Ask an admin to recreate this account with student ID, department, program, and year of study.`;
+  }
+  return message;
 }

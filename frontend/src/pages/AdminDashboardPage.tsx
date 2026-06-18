@@ -4,9 +4,11 @@ import { PageShell } from '../components/PageShell';
 import { RoleActivityPanel } from '../components/RoleActivityPanel';
 import {
   createAdminUser,
+  getAdminOffices,
   getAdminOverview,
   type AdminCreateUserPayload,
   type AdminOverviewResponse,
+  type OfficeResponse,
   type UserRole,
 } from '../services/api';
 
@@ -25,6 +27,7 @@ const defaultForm: AdminCreateUserPayload = {
 export function AdminDashboardPage() {
   const [form, setForm] = useState<AdminCreateUserPayload>(defaultForm);
   const [overview, setOverview] = useState<AdminOverviewResponse | null>(null);
+  const [offices, setOffices] = useState<OfficeResponse[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -37,8 +40,18 @@ export function AdminDashboardPage() {
     }
   }
 
+  async function loadOffices() {
+    try {
+      const activeOffices = await getAdminOffices();
+      setOffices(activeOffices.filter((office) => !isRegistrarOffice(office)));
+    } catch (officeError) {
+      setError(officeError instanceof Error ? officeError.message : 'Could not load offices');
+    }
+  }
+
   useEffect(() => {
     void loadOverview();
+    void loadOffices();
   }, []);
 
   function updateField<K extends keyof AdminCreateUserPayload>(key: K, value: AdminCreateUserPayload[K]) {
@@ -137,16 +150,23 @@ export function AdminDashboardPage() {
 
           {form.role === 'OFFICE_STAFF' && (
             <label className="block max-w-xs text-sm font-medium text-slate-700">
-              Office ID
-              <input
+              Assigned office
+              <select
                 className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                min={1}
-                onChange={(event) => updateField('officeId', Number(event.target.value))}
-                placeholder="Example: 1 for Library"
+                onChange={(event) => updateField('officeId', event.target.value ? Number(event.target.value) : undefined)}
                 required
-                type="number"
                 value={form.officeId ?? ''}
-              />
+              >
+                <option value="">Select office</option>
+                {offices.map((office) => (
+                  <option key={office.id} value={office.id}>
+                    {office.officeName}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs text-slate-500">
+                Finance staff must be assigned to Finance to see Finance clearance steps.
+              </span>
             </label>
           )}
 
@@ -207,7 +227,7 @@ function buildPayload(form: AdminCreateUserPayload): AdminCreateUserPayload {
   }
 
   if (form.role === 'OFFICE_STAFF') {
-    payload.officeId = Number(form.officeId);
+    payload.officeId = form.officeId;
   }
 
   return payload;
@@ -215,4 +235,8 @@ function buildPayload(form: AdminCreateUserPayload): AdminCreateUserPayload {
 
 function formatRole(role: UserRole) {
   return role.replace(/_/g, ' ').toLowerCase();
+}
+
+function isRegistrarOffice(office: OfficeResponse) {
+  return office.officeName.toLowerCase() === 'registrar';
 }

@@ -9,7 +9,7 @@ import {
 
 export function OfficeStaffDashboardPage() {
   const [steps, setSteps] = useState<OfficeStepReviewResponse[]>([]);
-  const [status, setStatus] = useState('PENDING');
+  const [status, setStatus] = useState('');
   const [comments, setComments] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [reviewingStepId, setReviewingStepId] = useState<number | null>(null);
@@ -112,7 +112,10 @@ export function OfficeStaffDashboardPage() {
           {loading ? (
             <p className="px-4 py-6 text-sm text-slate-600">Loading assigned steps...</p>
           ) : steps.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-slate-600">No assigned steps match this filter.</p>
+            <p className="px-4 py-6 text-sm text-slate-600">
+              No assigned steps match this filter. If Finance requests are missing, ask an admin to confirm this
+              account is assigned to the Finance office.
+            </p>
           ) : (
             <div className="divide-y divide-slate-100">
               {steps.map((step) => (

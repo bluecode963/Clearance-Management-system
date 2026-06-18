@@ -107,6 +107,13 @@ export type PageResponse<T> = {
   last: boolean;
 };
 
+export type OfficeResponse = {
+  id: number;
+  officeName: string;
+  description?: string | null;
+  active: boolean;
+};
+
 export type AdminOverviewResponse = {
   totalUsers: number;
   totalStudents: number;
@@ -236,6 +243,10 @@ export async function createAdminUser(payload: AdminCreateUserPayload) {
 
 export async function getAdminOverview() {
   return authorizedJson<AdminOverviewResponse>('/api/admin/overview');
+}
+
+export async function getAdminOffices() {
+  return authorizedJson<OfficeResponse[]>('/api/admin/offices');
 }
 
 export async function createClearanceRequest(payload: ClearanceRequestPayload) {
