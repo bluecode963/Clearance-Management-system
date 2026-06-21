@@ -17,6 +17,7 @@ import com.se4801.clearance.model.Office;
 import com.se4801.clearance.model.Role;
 import com.se4801.clearance.model.StudentProfile;
 import com.se4801.clearance.model.ApprovalLog;
+import com.se4801.clearance.model.AttachmentPurpose;
 import com.se4801.clearance.model.User;
 import com.se4801.clearance.repository.ApprovalLogRepository;
 import com.se4801.clearance.repository.ClearanceRequestRepository;
@@ -30,6 +31,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -52,6 +54,7 @@ public class ClearanceRequestService {
     private final OfficeRepository officeRepository;
     private final ApprovalLogRepository approvalLogRepository;
     private final UserRepository userRepository;
+    private final AttachmentService attachmentService;
 
     @Transactional
     public ClearanceRequestResponse createRequest(CreateClearanceRequest request, CustomUserPrincipal principal) {
@@ -128,6 +131,16 @@ public class ClearanceRequestService {
             StudentStepResubmissionRequest request,
             CustomUserPrincipal principal
     ) {
+        return resubmitStep(stepId, request, principal, null);
+    }
+
+    @Transactional
+    public ClearanceRequestResponse resubmitStep(
+            Long stepId,
+            StudentStepResubmissionRequest request,
+            CustomUserPrincipal principal,
+            MultipartFile attachment
+    ) {
         ensureStudent(principal);
         ClearanceStep step = clearanceStepRepository.findByIdAndClearanceRequestStudentProfileUserId(
                         stepId,
@@ -151,6 +164,13 @@ public class ClearanceRequestService {
         ClearanceRequest clearanceRequest = savedStep.getClearanceRequest();
         updateParentStatusAfterResubmission(clearanceRequest);
         saveResubmissionLog(savedStep, student, request);
+        attachmentService.storeWorkflowFile(
+                clearanceRequest,
+                savedStep,
+                student,
+                AttachmentPurpose.STUDENT_CORRECTION,
+                attachment
+        );
 
         return toResponse(clearanceRequest);
     }
@@ -159,7 +179,7 @@ public class ClearanceRequestService {
         List<ClearanceStepResponse> steps = clearanceStepRepository
                 .findByClearanceRequestIdOrderByOfficeIdAsc(clearanceRequest.getId())
                 .stream()
-                .map(ClearanceStepMapper::toResponse)
+                .map(step -> ClearanceStepMapper.toResponse(step, attachmentService.getStepAttachments(step.getId())))
                 .toList();
         return ClearanceRequestMapper.toResponse(clearanceRequest, steps);
     }

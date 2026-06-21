@@ -8,6 +8,7 @@ import com.se4801.clearance.exception.BusinessRuleException;
 import com.se4801.clearance.exception.ResourceNotFoundException;
 import com.se4801.clearance.mapper.OfficeStepReviewMapper;
 import com.se4801.clearance.model.ApprovalLog;
+import com.se4801.clearance.model.AttachmentPurpose;
 import com.se4801.clearance.model.ClearanceRequest;
 import com.se4801.clearance.model.ClearanceRequestStatus;
 import com.se4801.clearance.model.ClearanceStep;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
@@ -36,6 +38,7 @@ public class OfficeReviewService {
     private final ClearanceRequestRepository clearanceRequestRepository;
     private final ApprovalLogRepository approvalLogRepository;
     private final UserRepository userRepository;
+    private final AttachmentService attachmentService;
 
     @Transactional(readOnly = true)
     public PageResponse<OfficeStepReviewResponse> getAssignedSteps(
@@ -50,7 +53,7 @@ public class OfficeReviewService {
 
         List<OfficeStepReviewResponse> content = steps.getContent()
                 .stream()
-                .map(OfficeStepReviewMapper::toResponse)
+                .map(step -> toResponse(step))
                 .toList();
 
         return new PageResponse<>(
@@ -67,7 +70,7 @@ public class OfficeReviewService {
     public OfficeStepReviewResponse getAssignedStep(Long stepId, CustomUserPrincipal principal) {
         User staff = getOfficeStaff(principal);
         ClearanceStep step = findAssignedStep(stepId, staff);
-        return OfficeStepReviewMapper.toResponse(step);
+        return toResponse(step);
     }
 
     @Transactional
@@ -75,6 +78,16 @@ public class OfficeReviewService {
             Long stepId,
             ReviewClearanceStepRequest request,
             CustomUserPrincipal principal
+    ) {
+        return reviewStep(stepId, request, principal, null);
+    }
+
+    @Transactional
+    public OfficeStepReviewResponse reviewStep(
+            Long stepId,
+            ReviewClearanceStepRequest request,
+            CustomUserPrincipal principal,
+            MultipartFile attachment
     ) {
         User staff = getOfficeStaff(principal);
         ClearanceStep step = findAssignedStep(stepId, staff);
@@ -93,8 +106,15 @@ public class OfficeReviewService {
         ClearanceStep savedStep = clearanceStepRepository.save(step);
         saveApprovalLog(savedStep, staff, request);
         updateParentRequestStatus(savedStep.getClearanceRequest());
+        attachmentService.storeWorkflowFile(
+                savedStep.getClearanceRequest(),
+                savedStep,
+                staff,
+                AttachmentPurpose.OFFICE_REVIEW,
+                attachment
+        );
 
-        return OfficeStepReviewMapper.toResponse(savedStep);
+        return toResponse(savedStep);
     }
 
     private User getOfficeStaff(CustomUserPrincipal principal) {
@@ -174,5 +194,9 @@ public class OfficeReviewService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private OfficeStepReviewResponse toResponse(ClearanceStep step) {
+        return OfficeStepReviewMapper.toResponse(step, attachmentService.getStepAttachments(step.getId()));
     }
 }

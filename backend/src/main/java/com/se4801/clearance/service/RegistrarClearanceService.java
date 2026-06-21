@@ -10,6 +10,7 @@ import com.se4801.clearance.exception.ResourceNotFoundException;
 import com.se4801.clearance.mapper.ClearanceRequestMapper;
 import com.se4801.clearance.mapper.ClearanceStepMapper;
 import com.se4801.clearance.model.ApprovalLog;
+import com.se4801.clearance.model.AttachmentPurpose;
 import com.se4801.clearance.model.ClearanceRequest;
 import com.se4801.clearance.model.ClearanceRequestStatus;
 import com.se4801.clearance.model.ClearanceStep;
@@ -27,6 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -47,6 +49,7 @@ public class RegistrarClearanceService {
     private final ClearanceStepRepository clearanceStepRepository;
     private final ApprovalLogRepository approvalLogRepository;
     private final UserRepository userRepository;
+    private final AttachmentService attachmentService;
 
     @Transactional(readOnly = true)
     public PageResponse<ClearanceRequestResponse> listRequestsForRegistrar(
@@ -100,12 +103,22 @@ public class RegistrarClearanceService {
             RegistrarDecisionRequest decisionRequest,
             CustomUserPrincipal principal
     ) {
+        return decideFinalClearance(requestId, decisionRequest, principal, null);
+    }
+
+    @Transactional
+    public ClearanceRequestResponse decideFinalClearance(
+            Long requestId,
+            RegistrarDecisionRequest decisionRequest,
+            CustomUserPrincipal principal,
+            MultipartFile attachment
+    ) {
         ensureRegistrar(principal);
         User registrar = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Registrar user not found"));
         ClearanceRequest request = getRequest(requestId);
 
-        validateDecisionRequest(request, decisionRequest);
+        validateDecisionRequest(request, decisionRequest, attachment);
 
         ClearanceRequestStatus finalStatus = decisionRequest.decision() == RegistrarDecision.APPROVED
                 ? ClearanceRequestStatus.COMPLETED
@@ -114,8 +127,15 @@ public class RegistrarClearanceService {
         request.setStatus(finalStatus);
         clearanceRequestRepository.save(request);
 
-        updateRegistrarStep(request, registrar, decisionRequest);
+        ClearanceStep registrarStep = updateRegistrarStep(request, registrar, decisionRequest);
         saveApprovalLog(request, registrar, decisionRequest);
+        attachmentService.storeWorkflowFile(
+                request,
+                registrarStep,
+                registrar,
+                AttachmentPurpose.REGISTRAR_DECISION,
+                attachment
+        );
 
         return toResponse(request);
     }
@@ -125,13 +145,21 @@ public class RegistrarClearanceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Clearance request not found"));
     }
 
-    private void validateDecisionRequest(ClearanceRequest request, RegistrarDecisionRequest decisionRequest) {
+    private void validateDecisionRequest(
+            ClearanceRequest request,
+            RegistrarDecisionRequest decisionRequest,
+            MultipartFile attachment
+    ) {
         if (request.getStatus() != ClearanceRequestStatus.READY_FOR_REGISTRAR) {
             throw new BusinessRuleException("Only requests ready for registrar review can receive a final decision");
         }
 
         if (decisionRequest.decision() == RegistrarDecision.REJECTED && isBlank(decisionRequest.comment())) {
             throw new BusinessRuleException("Comment is required when registrar rejects a clearance request");
+        }
+        if (decisionRequest.decision() == RegistrarDecision.APPROVED
+                && !attachmentService.hasUpload(attachment)) {
+            throw new BusinessRuleException("An attachment is required for registrar approval");
         }
 
         List<ClearanceStep> steps = clearanceStepRepository.findByClearanceRequestIdOrderByOfficeIdAsc(request.getId());
@@ -144,7 +172,7 @@ public class RegistrarClearanceService {
         }
     }
 
-    private void updateRegistrarStep(
+    private ClearanceStep updateRegistrarStep(
             ClearanceRequest request,
             User registrar,
             RegistrarDecisionRequest decisionRequest
@@ -153,17 +181,16 @@ public class RegistrarClearanceService {
                 ? ClearanceStepStatus.APPROVED
                 : ClearanceStepStatus.REJECTED;
 
-        clearanceStepRepository.findByClearanceRequestIdOrderByOfficeIdAsc(request.getId())
+        ClearanceStep registrarStep = clearanceStepRepository.findByClearanceRequestIdOrderByOfficeIdAsc(request.getId())
                 .stream()
                 .filter(this::isRegistrarStep)
                 .findFirst()
-                .ifPresent(step -> {
-                    step.setStatus(stepStatus);
-                    step.setComment(normalizeComment(decisionRequest.comment()));
-                    step.setReviewedBy(registrar);
-                    step.setReviewedAt(Instant.now());
-                    clearanceStepRepository.save(step);
-                });
+                .orElseThrow(() -> new BusinessRuleException("Registrar clearance step is missing"));
+        registrarStep.setStatus(stepStatus);
+        registrarStep.setComment(normalizeComment(decisionRequest.comment()));
+        registrarStep.setReviewedBy(registrar);
+        registrarStep.setReviewedAt(Instant.now());
+        return clearanceStepRepository.save(registrarStep);
     }
 
     private void saveApprovalLog(
@@ -186,7 +213,7 @@ public class RegistrarClearanceService {
         List<ClearanceStepResponse> steps = clearanceStepRepository
                 .findByClearanceRequestIdOrderByOfficeIdAsc(request.getId())
                 .stream()
-                .map(ClearanceStepMapper::toResponse)
+                .map(step -> ClearanceStepMapper.toResponse(step, attachmentService.getStepAttachments(step.getId())))
                 .toList();
         return ClearanceRequestMapper.toResponse(request, steps);
     }

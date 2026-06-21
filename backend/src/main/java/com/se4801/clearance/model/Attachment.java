@@ -2,6 +2,8 @@ package com.se4801.clearance.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -40,6 +42,20 @@ public class Attachment {
     @Column(name = "file_path", nullable = false, length = 500)
     private String filePath;
 
+    @NotBlank
+    @Column(name = "content_type", nullable = false, length = 100)
+    private String contentType;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attachment_kind", nullable = false, length = 20)
+    private AttachmentKind attachmentKind;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purpose", nullable = false, length = 40)
+    private AttachmentPurpose purpose;
+
     @Builder.Default
     @Column(name = "uploaded_at", nullable = false, updatable = false)
     private Instant uploadedAt = Instant.now();
@@ -48,4 +64,12 @@ public class Attachment {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "clearance_request_id", nullable = false)
     private ClearanceRequest clearanceRequest;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "clearance_step_id")
+    private ClearanceStep clearanceStep;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploaded_by_id")
+    private User uploadedBy;
 }

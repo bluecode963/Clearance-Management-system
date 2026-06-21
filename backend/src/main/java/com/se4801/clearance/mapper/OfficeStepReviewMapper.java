@@ -1,9 +1,12 @@
 package com.se4801.clearance.mapper;
 
 import com.se4801.clearance.dto.response.OfficeStepReviewResponse;
+import com.se4801.clearance.dto.response.AttachmentResponse;
 import com.se4801.clearance.model.ClearanceRequest;
 import com.se4801.clearance.model.ClearanceStep;
 import com.se4801.clearance.model.StudentProfile;
+
+import java.util.List;
 
 public final class OfficeStepReviewMapper {
 
@@ -11,6 +14,10 @@ public final class OfficeStepReviewMapper {
     }
 
     public static OfficeStepReviewResponse toResponse(ClearanceStep step) {
+        return toResponse(step, List.of());
+    }
+
+    public static OfficeStepReviewResponse toResponse(ClearanceStep step, List<AttachmentResponse> attachments) {
         ClearanceRequest request = step.getClearanceRequest();
         StudentProfile studentProfile = request.getStudentProfile();
         return new OfficeStepReviewResponse(
@@ -25,7 +32,8 @@ public final class OfficeStepReviewMapper {
                 step.getStatus(),
                 step.getComment(),
                 step.getReviewedAt(),
-                step.getReviewedBy() == null ? null : step.getReviewedBy().getFullName()
+                step.getReviewedBy() == null ? null : step.getReviewedBy().getFullName(),
+                attachments
         );
     }
 }
