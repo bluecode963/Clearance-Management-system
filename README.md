@@ -256,8 +256,13 @@ JWT_SECRET
 JWT_EXPIRATION_MS
 ```
 
-Use a `JWT_SECRET` value of at least 32 characters when running login or registration.
-Docker Compose development files default to `student_clearance_docker_jwt_secret_key_2026`, and you can override it with the `JWT_SECRET` environment variable.
+Direct Maven runs use the `dev` profile by default and fall back to the local-only secret
+`student_clearance_local_dev_jwt_secret_key_2026`. Docker Compose development uses
+`student_clearance_docker_jwt_secret_key_2026`. Either value can be overridden with the
+`JWT_SECRET` environment variable.
+
+The `prod` profile has no fallback. Production must provide a `JWT_SECRET` value of at least
+32 characters.
 
 ## Role-Based Activities and Workflow
 
