@@ -2,6 +2,7 @@ import { MouseEvent, useEffect, useMemo, useState } from 'react';
 import { PageShell } from '../components/PageShell';
 import { RoleActivityPanel } from '../components/RoleActivityPanel';
 import {
+  downloadAttachment,
   getAssignedOfficeSteps,
   reviewOfficeStep,
   type OfficeStepReviewResponse,
@@ -11,6 +12,8 @@ export function OfficeStaffDashboardPage() {
   const [steps, setSteps] = useState<OfficeStepReviewResponse[]>([]);
   const [status, setStatus] = useState('');
   const [comments, setComments] = useState<Record<number, string>>({});
+  const [attachments, setAttachments] = useState<Record<number, File | null>>({});
+  const [uploadVersion, setUploadVersion] = useState(0);
   const [loading, setLoading] = useState(true);
   const [reviewingStepId, setReviewingStepId] = useState<number | null>(null);
   const [message, setMessage] = useState('');
@@ -44,9 +47,16 @@ export function OfficeStaffDashboardPage() {
     setReviewingStepId(stepId);
 
     try {
-      const reviewed = await reviewOfficeStep(stepId, decision, comments[stepId] ?? '');
+      const reviewed = await reviewOfficeStep(
+        stepId,
+        decision,
+        comments[stepId] ?? '',
+        attachments[stepId]
+      );
       setMessage(`Step #${reviewed.stepId} marked ${reviewed.status}.`);
       setComments((current) => ({ ...current, [stepId]: '' }));
+      setAttachments((current) => ({ ...current, [stepId]: null }));
+      setUploadVersion((current) => current + 1);
       await loadSteps(status);
     } catch (reviewError) {
       setError(reviewError instanceof Error ? reviewError.message : 'Could not review step');
@@ -138,6 +148,22 @@ export function OfficeStaffDashboardPage() {
                   </div>
 
                   {step.comment && <p className="rounded bg-slate-50 px-3 py-2 text-sm text-slate-600">{step.comment}</p>}
+                  {(step.attachments ?? []).length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {(step.attachments ?? []).map((attachment) => (
+                        <button
+                          className="text-sm font-medium text-brand-700 hover:underline"
+                          key={attachment.id}
+                          onClick={() => void downloadAttachment(attachment).catch((downloadError) => {
+                            setError(downloadError instanceof Error ? downloadError.message : 'Could not download attachment');
+                          })}
+                          type="button"
+                        >
+                          {formatEnum(attachment.purpose)}: {attachment.fileName}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {(step.status === 'PENDING' || step.status === 'RESUBMITTED') ? (
                     <form className="space-y-3" onSubmit={(event) => event.preventDefault()}>
@@ -148,6 +174,19 @@ export function OfficeStaffDashboardPage() {
                         placeholder="Comment for this decision"
                         value={comments[step.stepId] ?? ''}
                       />
+                      <label className="block text-sm font-medium text-slate-700">
+                        Attachment (optional document or picture)
+                        <input
+                          accept=".pdf,.doc,.docx,.txt,image/jpeg,image/png,image/webp"
+                          className="mt-1 block w-full text-sm text-slate-600"
+                          key={`${step.stepId}-attachment-${uploadVersion}`}
+                          onChange={(event) => setAttachments((current) => ({
+                            ...current,
+                            [step.stepId]: event.target.files?.[0] ?? null,
+                          }))}
+                          type="file"
+                        />
+                      </label>
                       <div className="flex flex-wrap gap-2">
                         <button
                           className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"

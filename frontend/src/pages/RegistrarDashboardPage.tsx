@@ -3,6 +3,7 @@ import { PageShell } from '../components/PageShell';
 import { RoleActivityPanel } from '../components/RoleActivityPanel';
 import {
   decideRegistrarClearance,
+  downloadAttachment,
   getRegistrarClearanceRequests,
   type ClearanceRequestResponse,
   type ClearanceType,
@@ -15,6 +16,8 @@ export function RegistrarDashboardPage() {
   const [studentId, setStudentId] = useState('');
   const [keyword, setKeyword] = useState('');
   const [comments, setComments] = useState<Record<number, string>>({});
+  const [attachments, setAttachments] = useState<Record<number, File | null>>({});
+  const [uploadVersion, setUploadVersion] = useState(0);
   const [loading, setLoading] = useState(true);
   const [decidingRequestId, setDecidingRequestId] = useState<number | null>(null);
   const [message, setMessage] = useState('');
@@ -50,12 +53,23 @@ export function RegistrarDashboardPage() {
     event.preventDefault();
     setMessage('');
     setError('');
+    if (decision === 'APPROVED' && !attachments[requestId]) {
+      setError('An attachment is required for registrar approval.');
+      return;
+    }
     setDecidingRequestId(requestId);
 
     try {
-      const decided = await decideRegistrarClearance(requestId, decision, comments[requestId] ?? '');
+      const decided = await decideRegistrarClearance(
+        requestId,
+        decision,
+        comments[requestId] ?? '',
+        attachments[requestId]
+      );
       setMessage(`Request #${decided.id} marked ${formatEnum(decided.status)}.`);
       setComments((current) => ({ ...current, [requestId]: '' }));
+      setAttachments((current) => ({ ...current, [requestId]: null }));
+      setUploadVersion((current) => current + 1);
       await loadRequests();
     } catch (decisionError) {
       setError(decisionError instanceof Error ? decisionError.message : 'Could not save registrar decision');
@@ -188,6 +202,18 @@ export function RegistrarDashboardPage() {
                         <p className="text-sm font-medium text-slate-900">{step.officeName}</p>
                         <p className="text-xs font-semibold text-slate-500">{formatEnum(step.status)}</p>
                         {step.comment && <p className="mt-1 text-xs text-slate-500">{step.comment}</p>}
+                        {(step.attachments ?? []).map((attachment) => (
+                          <button
+                            className="mt-1 block text-left text-xs font-medium text-brand-700 hover:underline"
+                            key={attachment.id}
+                            onClick={() => void downloadAttachment(attachment).catch((downloadError) => {
+                              setError(downloadError instanceof Error ? downloadError.message : 'Could not download attachment');
+                            })}
+                            type="button"
+                          >
+                            {formatEnum(attachment.purpose)}: {attachment.fileName}
+                          </button>
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -201,6 +227,22 @@ export function RegistrarDashboardPage() {
                         placeholder="Registrar comment. Required for rejection."
                         value={comments[request.id] ?? ''}
                       />
+                      <label className="block text-sm font-medium text-slate-700">
+                        Attachment (required for approval)
+                        <input
+                          accept=".pdf,.doc,.docx,.txt,image/jpeg,image/png,image/webp"
+                          className="mt-1 block w-full text-sm text-slate-600"
+                          key={`${request.id}-attachment-${uploadVersion}`}
+                          onChange={(event) => setAttachments((current) => ({
+                            ...current,
+                            [request.id]: event.target.files?.[0] ?? null,
+                          }))}
+                          type="file"
+                        />
+                      </label>
+                      <p className="text-xs text-slate-500">
+                        Upload one document or picture for approval. The attachment is optional for rejection.
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         <button
                           className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"

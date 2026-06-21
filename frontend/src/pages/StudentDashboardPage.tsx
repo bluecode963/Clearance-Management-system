@@ -3,6 +3,7 @@ import { PageShell } from '../components/PageShell';
 import { RoleActivityPanel } from '../components/RoleActivityPanel';
 import {
   createClearanceRequest,
+  downloadAttachment,
   getMyClearanceRequests,
   resubmitClearanceStep,
   type ClearanceRequestResponse,
@@ -14,6 +15,8 @@ export function StudentDashboardPage() {
   const [reason, setReason] = useState('');
   const [requests, setRequests] = useState<ClearanceRequestResponse[]>([]);
   const [correctionNotes, setCorrectionNotes] = useState<Record<number, string>>({});
+  const [correctionAttachments, setCorrectionAttachments] = useState<Record<number, File | null>>({});
+  const [uploadVersion, setUploadVersion] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [resubmittingStepId, setResubmittingStepId] = useState<number | null>(null);
@@ -64,9 +67,15 @@ export function StudentDashboardPage() {
     setResubmittingStepId(stepId);
 
     try {
-      await resubmitClearanceStep(stepId, correctionNotes[stepId] ?? '');
+      await resubmitClearanceStep(
+        stepId,
+        correctionNotes[stepId] ?? '',
+        correctionAttachments[stepId]
+      );
       setMessage('Correction submitted. Waiting for office re-review.');
       setCorrectionNotes((current) => ({ ...current, [stepId]: '' }));
+      setCorrectionAttachments((current) => ({ ...current, [stepId]: null }));
+      setUploadVersion((current) => current + 1);
       await loadRequests();
     } catch (resubmitError) {
       setError(resubmitError instanceof Error ? resubmitError.message : 'Could not request re-review');
@@ -166,6 +175,22 @@ export function StudentDashboardPage() {
                         <p className="text-sm font-medium text-slate-900">{step.officeName}</p>
                         <p className="text-xs font-semibold text-slate-500">{formatEnum(step.status)}</p>
                         {step.comment && <p className="mt-1 text-xs text-slate-500">{step.comment}</p>}
+                        {(step.attachments ?? []).length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {(step.attachments ?? []).map((attachment) => (
+                              <button
+                                className="block text-left text-xs font-medium text-brand-700 hover:underline"
+                                key={attachment.id}
+                                onClick={() => void downloadAttachment(attachment).catch((downloadError) => {
+                                  setError(downloadError instanceof Error ? downloadError.message : 'Could not download attachment');
+                                })}
+                                type="button"
+                              >
+                                {formatEnum(attachment.purpose)}: {attachment.fileName}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         {canResubmitStep(step, request.status) && (
                           <div className="mt-3 space-y-2">
                             <p className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-700">
@@ -178,6 +203,19 @@ export function StudentDashboardPage() {
                               placeholder={`Correction note for ${step.officeName}`}
                               value={correctionNotes[step.id] ?? ''}
                             />
+                            <label className="block text-xs font-medium text-slate-700">
+                              Attachment (optional document or picture)
+                              <input
+                                accept=".pdf,.doc,.docx,.txt,image/jpeg,image/png,image/webp"
+                                className="mt-1 block w-full text-xs text-slate-600"
+                                key={`${step.id}-attachment-${uploadVersion}`}
+                                onChange={(event) => setCorrectionAttachments((current) => ({
+                                  ...current,
+                                  [step.id]: event.target.files?.[0] ?? null,
+                                }))}
+                                type="file"
+                              />
+                            </label>
                             <button
                               className="rounded bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-400"
                               disabled={resubmittingStepId === step.id}
