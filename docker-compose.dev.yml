@@ -27,6 +27,9 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:-student_clearance_docker_jwt_secret_key_2026}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      FILE_UPLOAD_DIR: /app/uploads
+    volumes:
+      - attachment_data_dev:/app/uploads
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
@@ -47,3 +50,4 @@ services:
 
 volumes:
   postgres_data_dev:
+  attachment_data_dev:

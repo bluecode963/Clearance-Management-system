@@ -264,6 +264,12 @@ Direct Maven runs use the `dev` profile by default and fall back to the local-on
 The `prod` profile has no fallback. Production must provide a `JWT_SECRET` value of at least
 32 characters.
 
+Workflow actions support one attachment that can be a document (`PDF`, `DOC`, `DOCX`, or `TXT`)
+or picture (`JPG`, `PNG`, or `WEBP`), with a 10 MB limit. Student correction and office review
+attachments are optional. Registrar approval requires one attachment; registrar rejection
+attachments are optional. Local files are stored under `backend/uploads/`
+by default and the directory can be changed with `FILE_UPLOAD_DIR`.
+
 ## Role-Based Activities and Workflow
 
 ### Admin

@@ -12,6 +12,7 @@ WORKDIR /app
 
 RUN addgroup --system clearance && adduser --system --ingroup clearance clearance
 COPY --from=build /workspace/target/clearance-0.0.1-SNAPSHOT.jar app.jar
+RUN mkdir -p /app/uploads && chown -R clearance:clearance /app/uploads
 
 USER clearance
 EXPOSE 8080
