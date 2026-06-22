@@ -197,6 +197,9 @@ public class OfficeReviewService {
     }
 
     private OfficeStepReviewResponse toResponse(ClearanceStep step) {
-        return OfficeStepReviewMapper.toResponse(step, attachmentService.getStepAttachments(step.getId()));
+        return OfficeStepReviewMapper.toResponse(
+                step,
+                attachmentService.getRequestAttachments(step.getClearanceRequest().getId())
+        );
     }
 }

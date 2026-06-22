@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ClearanceStepRepository extends JpaRepository<ClearanceStep, Long> {
+    boolean existsByClearanceRequestIdAndOfficeId(Long clearanceRequestId, Long officeId);
+
     @EntityGraph(attributePaths = {"office", "clearanceRequest", "clearanceRequest.studentProfile", "clearanceRequest.studentProfile.user", "reviewedBy"})
     Page<ClearanceStep> findByOfficeId(Long officeId, Pageable pageable);
 

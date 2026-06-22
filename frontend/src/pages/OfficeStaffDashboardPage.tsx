@@ -149,19 +149,22 @@ export function OfficeStaffDashboardPage() {
 
                   {step.comment && <p className="rounded bg-slate-50 px-3 py-2 text-sm text-slate-600">{step.comment}</p>}
                   {(step.attachments ?? []).length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {(step.attachments ?? []).map((attachment) => (
-                        <button
-                          className="text-sm font-medium text-brand-700 hover:underline"
-                          key={attachment.id}
-                          onClick={() => void downloadAttachment(attachment).catch((downloadError) => {
-                            setError(downloadError instanceof Error ? downloadError.message : 'Could not download attachment');
-                          })}
-                          type="button"
-                        >
-                          {formatEnum(attachment.purpose)}: {attachment.fileName}
-                        </button>
-                      ))}
+                    <div className="rounded border border-slate-200 bg-slate-50 p-3">
+                      <p className="mb-2 text-xs font-semibold text-slate-700">Request attachments</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(step.attachments ?? []).map((attachment) => (
+                          <button
+                            className="text-sm font-medium text-brand-700 hover:underline"
+                            key={attachment.id}
+                            onClick={() => void downloadAttachment(attachment).catch((downloadError) => {
+                              setError(downloadError instanceof Error ? downloadError.message : 'Could not download attachment');
+                            })}
+                            type="button"
+                          >
+                            {formatEnum(attachment.purpose)}: {attachment.fileName}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
 
