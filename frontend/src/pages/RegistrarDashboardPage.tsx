@@ -5,6 +5,7 @@ import {
   decideRegistrarClearance,
   downloadAttachment,
   getRegistrarClearanceRequests,
+  type AttachmentResponse,
   type ClearanceRequestResponse,
   type ClearanceType,
 } from '../services/api';
@@ -36,6 +37,7 @@ export function RegistrarDashboardPage() {
       setRequests(page.content);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Could not load registrar requests');
+      setRequests([]);
     } finally {
       setLoading(false);
     }
@@ -169,7 +171,11 @@ export function RegistrarDashboardPage() {
           {loading ? (
             <p className="px-4 py-6 text-sm text-slate-600">Loading registrar requests...</p>
           ) : requests.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-slate-600">No clearance requests match these filters.</p>
+            <p className="px-4 py-6 text-sm text-slate-600">
+              {status === 'READY_FOR_REGISTRAR' && !requestType && !studentId.trim() && !keyword.trim()
+                ? 'No requests ready for registrar review.'
+                : 'No clearance requests match these filters.'}
+            </p>
           ) : (
             <div className="divide-y divide-slate-100">
               {requests.map((request) => (
@@ -211,7 +217,7 @@ export function RegistrarDashboardPage() {
                             })}
                             type="button"
                           >
-                            {formatEnum(attachment.purpose)}: {attachment.fileName}
+                            {formatAttachmentLabel(attachment)}
                           </button>
                         ))}
                       </div>
@@ -277,4 +283,22 @@ export function RegistrarDashboardPage() {
 
 function formatEnum(value: string) {
   return value.replace(/_/g, ' ');
+}
+
+function formatAttachmentLabel(attachment: AttachmentResponse) {
+  const uploader = attachment.uploadedBy
+    ? ` from ${attachment.uploadedBy}${attachment.uploadedByRole ? ` (${formatEnum(attachment.uploadedByRole)})` : ''}`
+    : '';
+  const size = attachment.size ? ` - ${formatFileSize(attachment.size)}` : '';
+  return `${formatEnum(attachment.purpose)}: ${attachment.fileName}${uploader}${size}`;
+}
+
+function formatFileSize(size: number) {
+  if (size < 1024) {
+    return `${size} B`;
+  }
+  if (size < 1024 * 1024) {
+    return `${Math.round(size / 1024)} KB`;
+  }
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }

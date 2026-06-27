@@ -8,6 +8,7 @@ import {
   resubmitClearanceStep,
   type ClearanceRequestResponse,
   type ClearanceType,
+  type AttachmentResponse,
 } from '../services/api';
 
 export function StudentDashboardPage() {
@@ -186,7 +187,7 @@ export function StudentDashboardPage() {
                                 })}
                                 type="button"
                               >
-                                {formatEnum(attachment.purpose)}: {attachment.fileName}
+                                {formatAttachmentLabel(attachment)}
                               </button>
                             ))}
                           </div>
@@ -246,6 +247,24 @@ export function StudentDashboardPage() {
 
 function formatEnum(value: string) {
   return value.replace(/_/g, ' ');
+}
+
+function formatAttachmentLabel(attachment: AttachmentResponse) {
+  const uploader = attachment.uploadedBy
+    ? ` from ${attachment.uploadedBy}${attachment.uploadedByRole ? ` (${formatEnum(attachment.uploadedByRole)})` : ''}`
+    : '';
+  const size = attachment.size ? ` - ${formatFileSize(attachment.size)}` : '';
+  return `${formatEnum(attachment.purpose)}: ${attachment.fileName}${uploader}${size}`;
+}
+
+function formatFileSize(size: number) {
+  if (size < 1024) {
+    return `${size} B`;
+  }
+  if (size < 1024 * 1024) {
+    return `${Math.round(size / 1024)} KB`;
+  }
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function canResubmitStep(step: { officeName: string; status: string }, requestStatus: string) {

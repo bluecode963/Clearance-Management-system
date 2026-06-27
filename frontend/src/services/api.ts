@@ -70,10 +70,12 @@ export type AttachmentResponse = {
   id: number;
   fileName: string;
   contentType: string;
+  size?: number | null;
   attachmentKind: 'DOCUMENT' | 'IMAGE';
   purpose: 'LEGACY' | 'STUDENT_CORRECTION' | 'OFFICE_REVIEW' | 'REGISTRAR_DECISION';
   uploadedAt: string;
   uploadedBy?: string | null;
+  uploadedByRole?: UserRole | null;
   downloadUrl: string;
 };
 
@@ -483,9 +485,9 @@ async function resolveErrorMessage(response: Response) {
     if (data.validationErrors?.length) {
       return data.validationErrors.join(', ');
     }
-    return data.message ?? 'Authentication request failed';
+    return data.message ?? `Request failed with status ${response.status}`;
   } catch {
-    return 'Authentication request failed';
+    return `Request failed with status ${response.status}`;
   }
 }
 
