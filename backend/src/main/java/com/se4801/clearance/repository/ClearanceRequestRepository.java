@@ -32,11 +32,11 @@ public interface ClearanceRequestRepository extends JpaRepository<ClearanceReque
             join profile.user student
             where (:status is null or request.status = :status)
               and (:requestType is null or request.requestType = :requestType)
-              and (:studentId is null or lower(profile.studentId) like lower(concat('%', :studentId, '%')))
+              and (:studentId is null or lower(profile.studentId) like lower(concat('%', cast(:studentId as string), '%')))
               and (:keyword is null
-                   or lower(student.fullName) like lower(concat('%', :keyword, '%'))
-                   or lower(student.email) like lower(concat('%', :keyword, '%'))
-                   or lower(profile.studentId) like lower(concat('%', :keyword, '%')))
+                   or lower(student.fullName) like lower(concat('%', cast(:keyword as string), '%'))
+                   or lower(student.email) like lower(concat('%', cast(:keyword as string), '%'))
+                   or lower(profile.studentId) like lower(concat('%', cast(:keyword as string), '%')))
             """)
     Page<ClearanceRequest> searchForRegistrar(
             @Param("status") ClearanceRequestStatus status,
