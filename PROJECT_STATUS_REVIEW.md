@@ -277,6 +277,41 @@ Docker Compose:
 - Docker was not run in this audit.
 - Development Compose files now default to `student_clearance_docker_jwt_secret_key_2026`, which satisfies the backend 32+ character JWT secret requirement while still allowing environment override.
 
+## 8A. Final Bug Fix Addendum
+
+Final bugfix branch:
+
+```text
+fetch/final-bugfix-attachments-registrar-list
+```
+
+Final bug fixes before submission:
+
+- Student correction/resubmission attachments are returned with request and step metadata so assigned office staff can view and download them.
+- Office review attachments remain linked to the reviewed step so the owning student can view and download them from the student dashboard.
+- Attachment responses now include safe metadata: file name, content type, size, purpose, uploader name/role, uploaded time, and protected download URL.
+- Attachment repository loading now fetches uploader details explicitly to reduce fragile lazy-loading behavior in dashboard responses.
+- Registrar dashboard empty state now clearly says `No requests ready for registrar review.` when no ready requests exist.
+- Frontend API error handling now shows safe backend messages or HTTP status instead of hiding failures behind generic text.
+
+Latest verification on this final bugfix branch:
+
+```text
+cd backend
+mvn clean package -DskipTests
+mvn test
+
+cd ../frontend
+npm install
+npm run build
+```
+
+Result:
+
+- Backend build: PASS.
+- Backend test command: PASS, but no tests are present on this branch.
+- Frontend build: PASS.
+
 ## 9. Bugs and Risks
 
 - Registrar final approval has been implemented on `fetch/registrar-final-approval-workflow`.

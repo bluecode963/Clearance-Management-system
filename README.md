@@ -270,6 +270,14 @@ attachments are optional. Registrar approval requires one attachment; registrar 
 attachments are optional. Local files are stored under `backend/uploads/`
 by default and the directory can be changed with `FILE_UPLOAD_DIR`.
 
+Final bug fixes before submission:
+
+- Student resubmission attachments are linked to the clearance request and step, so the assigned office staff can view and download them.
+- Office review attachments are linked to the same request and step, so the student can view and download staff evidence or comments.
+- Attachment responses include safe metadata only: file name, content type, size, purpose, uploader name/role, upload time, and a protected download URL.
+- Registrar dashboard empty state now clearly says `No requests ready for registrar review.` when no ready requests exist.
+- Frontend API errors now show the backend safe error message or HTTP status instead of hiding failures behind a generic message.
+
 ## Role-Based Activities and Workflow
 
 ### Admin

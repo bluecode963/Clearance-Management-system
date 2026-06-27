@@ -168,6 +168,8 @@ Flyway migrations V1 through V12 exist and cover schema creation, indexes, defau
 - Registrar approval attachment is required.
 - Registrar rejection attachment is optional.
 - Assigned office staff can view request attachments uploaded by the student.
+- Students can view office review attachments for their own request steps.
+- Attachment metadata includes safe uploader and file-size details without exposing local file paths.
 - Attachments are stored outside Git in `backend/uploads/` by default.
 
 ## 3. Partial Features
@@ -315,6 +317,22 @@ Results:
 - Frontend build: PASS.
 - Blocking build errors: none found.
 - Non-blocking warning: Maven shows annotation-processing informational warning because Lombok annotation processing is detected automatically.
+
+Additional final bugfix verification on `fetch/final-bugfix-attachments-registrar-list`:
+
+- Backend build: PASS with `mvn clean package -DskipTests`.
+- Backend test command: PASS, but still reports `No tests to run`.
+- Frontend install/build: PASS with `npm install` and `npm run build`.
+- Manual browser/Swagger verification should still be performed with real users before submission.
+
+## 9.1 Final Bug Fixes
+
+- Student resubmission attachments are returned with request/step metadata so assigned office staff can download them.
+- Office review attachments remain linked to the reviewed step so the owning student can download them from the student dashboard.
+- Attachment response metadata was hardened to include safe file size and uploader role information.
+- Attachment repository loading now fetches uploader details explicitly to avoid fragile lazy-loading behavior in dashboard responses.
+- Registrar empty state now says `No requests ready for registrar review.` when the ready list is empty.
+- Frontend API errors now show safe backend messages or HTTP status codes instead of only generic unexpected errors.
 
 ## 10. Manual Test Plan
 
