@@ -41,11 +41,11 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ClearanceRequestService {
 
-    private static final Set<ClearanceRequestStatus> ACTIVE_STATUSES = EnumSet.of(
-            ClearanceRequestStatus.PENDING,
+    private static final Set<ClearanceRequestStatus> DUPLICATE_TYPE_BLOCKING_STATUSES = EnumSet.of(
             ClearanceRequestStatus.IN_REVIEW,
             ClearanceRequestStatus.NEEDS_CORRECTION,
-            ClearanceRequestStatus.READY_FOR_REGISTRAR
+            ClearanceRequestStatus.READY_FOR_REGISTRAR,
+            ClearanceRequestStatus.COMPLETED
     );
 
     private final ClearanceRequestRepository clearanceRequestRepository;
@@ -61,8 +61,12 @@ public class ClearanceRequestService {
         ensureStudent(principal);
         StudentProfile studentProfile = findStudentProfile(principal.getId());
 
-        if (clearanceRequestRepository.existsByStudentProfileUserIdAndStatusIn(principal.getId(), ACTIVE_STATUSES)) {
-            throw new BusinessRuleException("You already have an active clearance request");
+        if (clearanceRequestRepository.existsByStudentProfileUserIdAndRequestTypeAndStatusIn(
+                principal.getId(), request.requestType(), DUPLICATE_TYPE_BLOCKING_STATUSES
+        )) {
+            throw new BusinessRuleException(
+                    "You already have a completed or active clearance request for this type."
+            );
         }
 
         List<Office> offices = officeRepository.findByActiveTrueOrderByIdAsc();

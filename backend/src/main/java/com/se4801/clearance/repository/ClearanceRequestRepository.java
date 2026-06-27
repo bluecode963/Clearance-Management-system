@@ -17,7 +17,11 @@ public interface ClearanceRequestRepository extends JpaRepository<ClearanceReque
     @EntityGraph(attributePaths = {"studentProfile", "studentProfile.user"})
     Page<ClearanceRequest> findByStudentProfileUserId(Long userId, Pageable pageable);
 
-    boolean existsByStudentProfileUserIdAndStatusIn(Long userId, Collection<ClearanceRequestStatus> statuses);
+    boolean existsByStudentProfileUserIdAndRequestTypeAndStatusIn(
+            Long userId,
+            ClearanceType requestType,
+            Collection<ClearanceRequestStatus> statuses
+    );
 
     long countByStatus(ClearanceRequestStatus status);
 
