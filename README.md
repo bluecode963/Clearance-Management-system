@@ -277,6 +277,7 @@ Final bug fixes before submission:
 - Attachment responses include safe metadata only: file name, content type, size, purpose, uploader name/role, upload time, and a protected download URL.
 - Registrar dashboard empty state now clearly says `No requests ready for registrar review.` when no ready requests exist.
 - Frontend API errors now show the backend safe error message or HTTP status instead of hiding failures behind a generic message.
+- Registrar dashboard real loading error was fixed by typing nullable registrar search filters correctly in the backend query. `GET /api/registrar/clearance-requests?status=READY_FOR_REGISTRAR&page=0&size=10` now returns 200 and lists ready requests.
 
 ## Role-Based Activities and Workflow
 

@@ -333,6 +333,8 @@ Additional final bugfix verification on `fetch/final-bugfix-attachments-registra
 - Attachment repository loading now fetches uploader details explicitly to avoid fragile lazy-loading behavior in dashboard responses.
 - Registrar empty state now says `No requests ready for registrar review.` when the ready list is empty.
 - Frontend API errors now show safe backend messages or HTTP status codes instead of only generic unexpected errors.
+- Registrar dashboard real loading error was fixed after reproducing the backend 500. PostgreSQL rejected nullable string filters in the registrar query with `function lower(bytea) does not exist`; the query now casts nullable `studentId` and `keyword` filters as strings.
+- Verified `GET /api/registrar/clearance-requests?status=READY_FOR_REGISTRAR&page=0&size=10` returns 200 with a registrar token and includes ready requests when they exist.
 
 ## 10. Manual Test Plan
 
