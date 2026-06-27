@@ -12,7 +12,6 @@ import com.se4801.clearance.model.ClearanceStep;
 import com.se4801.clearance.model.Role;
 import com.se4801.clearance.model.User;
 import com.se4801.clearance.repository.AttachmentRepository;
-import com.se4801.clearance.repository.ClearanceStepRepository;
 import com.se4801.clearance.repository.UserRepository;
 import com.se4801.clearance.security.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +47,6 @@ public class AttachmentService {
     private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
     private final AttachmentRepository attachmentRepository;
-    private final ClearanceStepRepository clearanceStepRepository;
     private final UserRepository userRepository;
 
     @Value("${app.upload.directory:uploads}")
@@ -73,13 +71,6 @@ public class AttachmentService {
 
     public List<AttachmentResponse> getStepAttachments(Long stepId) {
         return attachmentRepository.findByClearanceStepIdOrderByUploadedAtAsc(stepId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
-    }
-
-    public List<AttachmentResponse> getRequestAttachments(Long requestId) {
-        return attachmentRepository.findByClearanceRequestIdOrderByUploadedAtAsc(requestId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -186,10 +177,8 @@ public class AttachmentService {
             User staff = userRepository.findWithOfficeById(principal.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Office staff user not found"));
             if (staff.getOffice() != null
-                    && clearanceStepRepository.existsByClearanceRequestIdAndOfficeId(
-                    attachment.getClearanceRequest().getId(),
-                    staff.getOffice().getId()
-            )) {
+                    && attachment.getClearanceStep() != null
+                    && attachment.getClearanceStep().getOffice().getId().equals(staff.getOffice().getId())) {
                 return;
             }
         }

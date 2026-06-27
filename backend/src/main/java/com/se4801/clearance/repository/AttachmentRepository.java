@@ -12,9 +12,6 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     @EntityGraph(attributePaths = "uploadedBy")
     List<Attachment> findByClearanceStepIdOrderByUploadedAtAsc(Long clearanceStepId);
 
-    @EntityGraph(attributePaths = "uploadedBy")
-    List<Attachment> findByClearanceRequestIdOrderByUploadedAtAsc(Long clearanceRequestId);
-
     @EntityGraph(attributePaths = {
             "clearanceRequest.studentProfile.user",
             "clearanceStep.office",
