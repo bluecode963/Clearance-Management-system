@@ -2,6 +2,13 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 const BACKEND_CONNECTION_ERROR =
   'Cannot connect to backend. Please check if backend is running on http://localhost:8080.';
 
+export class ApiRequestError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = 'ApiRequestError';
+  }
+}
+
 export type UserRole = 'ADMIN' | 'STUDENT' | 'OFFICE_STAFF' | 'REGISTRAR';
 
 export type UserResponse = {
@@ -243,7 +250,7 @@ export async function resetPassword(payload: ResetPasswordPayload) {
   }
 
   if (!response.ok) {
-    throw new Error(await resolveErrorMessage(response));
+    throw new ApiRequestError(await resolveErrorMessage(response), response.status);
   }
 
   return response.json() as Promise<PasswordResetStartResponse>;
@@ -370,7 +377,7 @@ export async function downloadAttachment(attachment: AttachmentResponse) {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) {
-    throw new Error(await resolveErrorMessage(response));
+    throw new ApiRequestError(await resolveErrorMessage(response), response.status);
   }
 
   const objectUrl = URL.createObjectURL(await response.blob());
@@ -438,7 +445,7 @@ async function authorizedJson<T>(path: string, options: RequestInit = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(await resolveErrorMessage(response));
+    throw new ApiRequestError(await resolveErrorMessage(response), response.status);
   }
 
   return response.json() as Promise<T>;
@@ -464,7 +471,7 @@ async function authorizedMultipart<T>(path: string, options: RequestInit) {
   }
 
   if (!response.ok) {
-    throw new Error(await resolveErrorMessage(response));
+    throw new ApiRequestError(await resolveErrorMessage(response), response.status);
   }
   return response.json() as Promise<T>;
 }

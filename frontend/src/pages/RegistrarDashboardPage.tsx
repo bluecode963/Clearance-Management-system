@@ -2,6 +2,7 @@ import { MouseEvent, useEffect, useMemo, useState } from 'react';
 import { PageShell } from '../components/PageShell';
 import { RoleActivityPanel } from '../components/RoleActivityPanel';
 import {
+  ApiRequestError,
   decideRegistrarClearance,
   downloadAttachment,
   getRegistrarClearanceRequests,
@@ -36,7 +37,10 @@ export function RegistrarDashboardPage() {
       });
       setRequests(page.content);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Could not load registrar requests');
+      setError(formatRegistrarLoadError(loadError));
+      if (loadError instanceof ApiRequestError && loadError.status >= 500) {
+        console.error('Registrar request loading failed', loadError);
+      }
       setRequests([]);
     } finally {
       setLoading(false);
@@ -283,6 +287,19 @@ export function RegistrarDashboardPage() {
 
 function formatEnum(value: string) {
   return value.replace(/_/g, ' ');
+}
+
+function formatRegistrarLoadError(error: unknown) {
+  if (error instanceof ApiRequestError) {
+    if (error.status === 401 || error.status === 403) {
+      return 'Your session expired or you are not allowed to access registrar requests. Please login again.';
+    }
+    if (error.status === 500) {
+      return 'Registrar request loading failed. Please check backend logs.';
+    }
+    return error.message;
+  }
+  return error instanceof Error ? error.message : 'Could not load registrar requests';
 }
 
 function formatAttachmentLabel(attachment: AttachmentResponse) {
