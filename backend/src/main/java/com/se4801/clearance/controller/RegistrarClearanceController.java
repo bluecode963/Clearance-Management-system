@@ -43,6 +43,7 @@ public class RegistrarClearanceController {
             @RequestParam(required = false) ClearanceType requestType,
             @RequestParam(required = false) String studentId,
             @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "false") boolean includeAll,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
@@ -57,6 +58,7 @@ public class RegistrarClearanceController {
                 requestType,
                 studentId,
                 keyword,
+                includeAll,
                 pageable
         ));
     }

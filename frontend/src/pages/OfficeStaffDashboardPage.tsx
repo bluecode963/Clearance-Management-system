@@ -11,7 +11,7 @@ import {
 
 export function OfficeStaffDashboardPage() {
   const [steps, setSteps] = useState<OfficeStepReviewResponse[]>([]);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('ACTIONABLE');
   const [comments, setComments] = useState<Record<number, string>>({});
   const [attachments, setAttachments] = useState<Record<number, File | null>>({});
   const [uploadVersion, setUploadVersion] = useState(0);
@@ -24,7 +24,10 @@ export function OfficeStaffDashboardPage() {
     setLoading(true);
     setError('');
     try {
-      const page = await getAssignedOfficeSteps(selectedStatus || undefined);
+      const page = await getAssignedOfficeSteps(
+        selectedStatus === 'ACTIONABLE' || selectedStatus === 'ALL' ? undefined : selectedStatus,
+        selectedStatus === 'ALL'
+      );
       setSteps(page.content);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Could not load assigned steps');
@@ -97,7 +100,8 @@ export function OfficeStaffDashboardPage() {
               onChange={(event) => setStatus(event.target.value)}
               value={status}
             >
-              <option value="">All</option>
+              <option value="ACTIONABLE">Actionable (pending and resubmitted)</option>
+              <option value="ALL">All</option>
               <option value="PENDING">Pending</option>
               <option value="RESUBMITTED">Resubmitted</option>
               <option value="NEEDS_CORRECTION">Needs correction</option>

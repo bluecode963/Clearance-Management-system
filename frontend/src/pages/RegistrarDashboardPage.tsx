@@ -31,6 +31,7 @@ export function RegistrarDashboardPage() {
     try {
       const page = await getRegistrarClearanceRequests({
         status: status || undefined,
+        includeAll: status === 'ALL',
         requestType,
         studentId,
         keyword,
@@ -122,6 +123,7 @@ export function RegistrarDashboardPage() {
               value={status}
             >
               <option value="READY_FOR_REGISTRAR">Ready for registrar</option>
+              <option value="ALL">All</option>
               <option value="COMPLETED">Completed</option>
               <option value="REJECTED">Rejected</option>
             </select>

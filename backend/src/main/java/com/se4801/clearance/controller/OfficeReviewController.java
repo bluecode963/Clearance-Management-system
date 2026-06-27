@@ -40,14 +40,15 @@ public class OfficeReviewController {
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) ClearanceStepStatus status
+            @RequestParam(required = false) ClearanceStepStatus status,
+            @RequestParam(defaultValue = "false") boolean includeAll
     ) {
         Pageable pageable = PageRequest.of(
                 Math.max(page, 0),
                 Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
                 Sort.by(Sort.Direction.ASC, "createdAt")
         );
-        return ResponseEntity.ok(officeReviewService.getAssignedSteps(principal, status, pageable));
+        return ResponseEntity.ok(officeReviewService.getAssignedSteps(principal, status, includeAll, pageable));
     }
 
     @GetMapping("/{id}")

@@ -58,12 +58,13 @@ public class RegistrarClearanceService {
             ClearanceType requestType,
             String studentId,
             String keyword,
+            boolean includeAll,
             Pageable pageable
     ) {
         ensureRegistrar(principal);
 
         Page<ClearanceRequest> requests = clearanceRequestRepository.searchForRegistrar(
-                status == null ? ClearanceRequestStatus.READY_FOR_REGISTRAR : status,
+                status == null && !includeAll ? ClearanceRequestStatus.READY_FOR_REGISTRAR : status,
                 requestType,
                 normalizeFilter(studentId),
                 normalizeFilter(keyword),

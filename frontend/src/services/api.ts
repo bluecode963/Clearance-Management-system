@@ -300,9 +300,13 @@ export async function resubmitClearanceStep(
   });
 }
 
-export async function getAssignedOfficeSteps(status?: string) {
-  const query = status ? `?status=${status}` : '';
-  return authorizedJson<PageResponse<OfficeStepReviewResponse>>(`/api/office/clearance-steps${query}`);
+export async function getAssignedOfficeSteps(status?: string, includeAll = false) {
+  const query = new URLSearchParams();
+  if (status) query.set('status', status);
+  if (includeAll) query.set('includeAll', 'true');
+  const queryString = query.toString();
+  const suffix = queryString ? `?${queryString}` : '';
+  return authorizedJson<PageResponse<OfficeStepReviewResponse>>(`/api/office/clearance-steps${suffix}`);
 }
 
 export async function reviewOfficeStep(
@@ -325,14 +329,16 @@ export type RegistrarRequestFilters = {
   keyword?: string;
   page?: number;
   size?: number;
+  includeAll?: boolean;
 };
 
 export async function getRegistrarClearanceRequests(filters: RegistrarRequestFilters = {}) {
   const query = new URLSearchParams();
   query.set('page', String(filters.page ?? 0));
   query.set('size', String(filters.size ?? 10));
+  if (filters.includeAll) query.set('includeAll', 'true');
 
-  if (filters.status) {
+  if (filters.status && filters.status !== 'ALL') {
     query.set('status', filters.status);
   }
   if (filters.requestType) {

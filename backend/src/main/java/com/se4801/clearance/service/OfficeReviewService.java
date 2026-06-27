@@ -28,11 +28,18 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class OfficeReviewService {
+
+    private static final Set<ClearanceStepStatus> ACTIONABLE_STATUSES = EnumSet.of(
+            ClearanceStepStatus.PENDING,
+            ClearanceStepStatus.RESUBMITTED
+    );
 
     private final ClearanceStepRepository clearanceStepRepository;
     private final ClearanceRequestRepository clearanceRequestRepository;
@@ -44,12 +51,20 @@ public class OfficeReviewService {
     public PageResponse<OfficeStepReviewResponse> getAssignedSteps(
             CustomUserPrincipal principal,
             ClearanceStepStatus status,
+            boolean includeAll,
             Pageable pageable
     ) {
         User staff = getOfficeStaff(principal);
-        Page<ClearanceStep> steps = status == null
-                ? clearanceStepRepository.findByOfficeId(staff.getOffice().getId(), pageable)
-                : clearanceStepRepository.findByOfficeIdAndStatus(staff.getOffice().getId(), status, pageable);
+        Page<ClearanceStep> steps;
+        if (status != null) {
+            steps = clearanceStepRepository.findByOfficeIdAndStatus(staff.getOffice().getId(), status, pageable);
+        } else if (includeAll) {
+            steps = clearanceStepRepository.findByOfficeId(staff.getOffice().getId(), pageable);
+        } else {
+            steps = clearanceStepRepository.findByOfficeIdAndStatusIn(
+                    staff.getOffice().getId(), ACTIONABLE_STATUSES, pageable
+            );
+        }
 
         List<OfficeStepReviewResponse> content = steps.getContent()
                 .stream()
