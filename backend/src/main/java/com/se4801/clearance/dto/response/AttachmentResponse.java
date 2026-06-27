@@ -9,10 +9,12 @@ public record AttachmentResponse(
         Long id,
         String fileName,
         String contentType,
+        Long size,
         AttachmentKind attachmentKind,
         AttachmentPurpose purpose,
         Instant uploadedAt,
         String uploadedBy,
+        String uploadedByRole,
         String downloadUrl
 ) {
 }

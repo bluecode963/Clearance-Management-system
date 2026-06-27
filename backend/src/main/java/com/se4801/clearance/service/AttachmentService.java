@@ -197,12 +197,27 @@ public class AttachmentService {
     }
 
     private AttachmentResponse toResponse(Attachment attachment) {
+        User uploadedBy = attachment.getUploadedBy();
         return new AttachmentResponse(
                 attachment.getId(), attachment.getFileName(), attachment.getContentType(),
+                resolveFileSize(attachment),
                 attachment.getAttachmentKind(), attachment.getPurpose(), attachment.getUploadedAt(),
-                attachment.getUploadedBy() == null ? null : attachment.getUploadedBy().getFullName(),
+                uploadedBy == null ? null : uploadedBy.getFullName(),
+                uploadedBy == null ? null : uploadedBy.getRole().name(),
                 "/api/attachments/" + attachment.getId()
         );
+    }
+
+    private Long resolveFileSize(Attachment attachment) {
+        try {
+            Path file = uploadRoot().resolve(attachment.getFilePath()).normalize();
+            if (!file.startsWith(uploadRoot()) || !Files.isRegularFile(file)) {
+                return null;
+            }
+            return Files.size(file);
+        } catch (IOException exception) {
+            return null;
+        }
     }
 
     private Path uploadRoot() {
